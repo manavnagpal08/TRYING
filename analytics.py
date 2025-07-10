@@ -72,23 +72,17 @@ if df.empty:
     st.info("No data available for analytics. Please screen some resumes first.")
     st.stop()
 
-# --- Essential Column Check (Added for Robustness) ---
-# Ensure these core columns exist for calculations and filters
-required_columns = ['Score (%)', 'Years Experience', 'File Name', 'Candidate Name', 'AI Suggestion']
-# Also include columns used for 'Matched Keywords' and 'Missing Skills' sections if they are expected
-# but these have separate checks later, so let's stick to the ones needed for initial metrics/filters
-# 'Matched Keywords', 'Missing Skills' are optional for their respective plots, but if missing from dataframe
-# when accessed in the dataframe display, it will also cause issues.
-# So better to ensure they are available for the main dataframe display.
-optional_for_plots_but_good_for_df = ['Matched Keywords', 'Missing Skills']
-all_expected_columns = required_columns + optional_for_plots_but_good_for_df
+# --- Essential Column Check (Updated for Robustness) ---
+# These are the absolute minimum columns required for the dashboard to function meaningfully.
+# Other columns like 'AI Suggestion', 'Matched Keywords', 'Missing Skills' are now handled as optional
+# for their specific display sections.
+essential_core_columns = ['Score (%)', 'Years Experience', 'File Name', 'Candidate Name']
 
-missing_required_columns = [col for col in all_expected_columns if col not in df.columns]
+missing_essential_columns = [col for col in essential_core_columns if col not in df.columns]
 
-if missing_required_columns:
-    st.error(f"Error: The loaded data is missing essential columns for analytics: {', '.join(missing_required_columns)}."
-             " Please ensure your screening process generates all required data in `results.csv` "
-             "or `st.session_state['screening_results']`.")
+if missing_essential_columns:
+    st.error(f"Error: The loaded data is missing essential core columns: {', '.join(missing_essential_columns)}."
+             " Please ensure your screening process generates at least these required data fields.")
     st.stop()
 
 
@@ -157,12 +151,15 @@ st.divider()
 
 # --- Detailed Candidate Table ---
 st.markdown("### 📋 Filtered Candidates List")
-# Define the columns to display for the dataframe. Use a list to ensure order.
-display_cols_for_table = ['File Name', 'Candidate Name', 'Score (%)', 'Years Experience', 'Shortlisted', 'AI Suggestion']
+# Define the columns to display for the dataframe dynamically
+display_cols_for_table = ['File Name', 'Candidate Name', 'Score (%)', 'Years Experience', 'Shortlisted']
+
 if 'Matched Keywords' in filtered_df.columns:
-    display_cols_for_table.insert(5, 'Matched Keywords') # Insert at specific position
+    display_cols_for_table.append('Matched Keywords')
 if 'Missing Skills' in filtered_df.columns:
-    display_cols_for_table.insert(6, 'Missing Skills') # Insert after Matched Keywords
+    display_cols_for_table.append('Missing Skills')
+if 'AI Suggestion' in filtered_df.columns: # Added this check for AI Suggestion
+    display_cols_for_table.append('AI Suggestion')
 
 st.dataframe(
     filtered_df[display_cols_for_table].sort_values(by="Score (%)", ascending=False),
@@ -239,6 +236,7 @@ with tab5:
     col_wc1, col_wc2 = st.columns(2)
     with col_wc1:
         st.markdown("#### ☁️ Common Skills WordCloud")
+        # Check for presence of 'Matched Keywords' column before processing
         if 'Matched Keywords' in filtered_df.columns and not filtered_df['Matched Keywords'].empty:
             # Flatten list of lists for keywords, handle NaN and empty strings
             all_keywords = [
@@ -254,10 +252,11 @@ with tab5:
             else:
                 st.info("No common skills to display in the WordCloud for filtered data.")
         else:
-            st.info("No 'Matched Keywords' data available for WordCloud.")
+            st.info("No 'Matched Keywords' data available or column not found for WordCloud.")
     
     with col_wc2:
         st.markdown("#### ❌ Top Missing Skills")
+        # Check for presence of 'Missing Skills' column before processing
         if 'Missing Skills' in filtered_df.columns and not filtered_df['Missing Skills'].empty:
             # Flatten list of lists for missing skills, handle NaN and empty strings
             all_missing = pd.Series([
@@ -275,6 +274,6 @@ with tab5:
             else:
                 st.info("No top missing skills to display for filtered data.")
         else:
-            st.info("No 'Missing Skills' column found in data or it's empty.")
+            st.info("No 'Missing Skills' data available or column not found.")
 
 st.markdown("</div>", unsafe_allow_html=True)
