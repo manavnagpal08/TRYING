@@ -223,7 +223,7 @@ def extract_name(text):
 def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text):
     """Generates a detailed AI suggestion using a Generative AI model (Gemini Pro)."""
     try:
-        model_gen = genai.GenerativeModel('gemini-pro')
+        model_gen = genai.GenerativeModel('gemini-1.0-pro')
         
         prompt = f"""
         As an AI-powered Senior Recruitment Analyst, analyze the following candidate's suitability for a job role based on their resume and the job description. Provide a comprehensive, actionable suggestion for the recruiting team.
