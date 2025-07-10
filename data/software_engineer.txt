@@ -1,0 +1,34 @@
+Job Title: Software Engineer
+
+About Us:
+We are a leading company in technology solutions looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning.
+
+Job Summary:
+As a Software Engineer, you will be responsible for designing scalable software systems, developing high-quality code, and participating in code reviews. You will work closely with development team to deliver innovative software products.
+
+Key Responsibilities:
+- Develop and maintain robust software applications using Python and Java.
+- Implement RESTful APIs and microservices architectures.
+- Write unit and integration tests to ensure code quality.
+- Collaborate with cross-functional teams.
+- Ensure high quality and timely delivery of projects.
+- Stay updated with industry best practices and emerging technologies.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science or a related field.
+- X+ years of proven experience in Software Engineer or a similar role.
+- Strong proficiency in Python, Java, Spring Boot.
+- Experience with REST APIs, Microservices, SQL databases.
+- Excellent problem-solving and analytical skills.
+- Strong communication and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Docker, Kubernetes, AWS, Git, Agile Scrum.
+- Certifications relevant to the role.
+- Ability to work in a fast-paced and dynamic environment.
+
+Benefits:
+- Competitive salary and benefits package.
+- Opportunities for professional growth and development.
+- Flexible work arrangements.
+- Inclusive and supportive work environment.

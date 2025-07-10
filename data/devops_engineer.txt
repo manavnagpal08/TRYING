@@ -1,0 +1,15 @@
+DevOps Engineer
+
+Looking for a DevOps Engineer to automate infrastructure and streamline CI/CD processes.
+
+Responsibilities:
+- Manage cloud infrastructure (AWS, Azure, GCP)
+- Implement CI/CD pipelines
+- Monitor system health and performance
+- Ensure security and compliance best practices
+
+Required Skills:
+- Experience with Docker, Kubernetes, Jenkins
+- Proficient in scripting (Bash, Python)
+- Knowledge of Infrastructure as Code (Terraform, Ansible)
+- Familiarity with Git, version control, and DevOps tools

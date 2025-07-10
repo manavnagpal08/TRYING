@@ -1,0 +1,16 @@
+Job Title: Backend Developer
+
+We are hiring a Backend Developer responsible for server-side logic and integration with front-end technologies.
+
+Responsibilities:
+- Develop RESTful APIs and server-side logic
+- Manage database systems and performance
+- Implement security and data protection
+- Optimize applications for speed and scalability
+
+Skills Required:
+- Proficient in Node.js, Django, or Flask
+- Solid understanding of databases (SQL, MongoDB)
+- Familiarity with Docker, CI/CD, and microservices
+- Strong grasp of authentication and authorization protocols
+- Comfortable with version control (Git)

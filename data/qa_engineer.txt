@@ -1,0 +1,14 @@
+QA Engineer
+
+We are hiring a QA Engineer to ensure product quality through manual and automated testing.
+
+Responsibilities:
+- Design and execute test plans and cases
+- Identify bugs and work closely with developers to resolve them
+- Automate test suites using tools like Selenium
+
+Required Skills:
+- Strong understanding of software QA methodologies
+- Hands-on experience with automation tools
+- Knowledge of scripting languages (Python, Java)
+- Excellent analytical and problem-solving skills

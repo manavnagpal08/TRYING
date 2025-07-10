@@ -1,0 +1,16 @@
+Job Title: Machine Learning Engineer
+
+As a Machine Learning Engineer, you'll design and implement machine learning applications that improve product performance.
+
+Responsibilities:
+- Design and train ML models on structured and unstructured data
+- Optimize models for performance and scalability
+- Deploy models to production
+- Work with large datasets and cloud platforms
+
+Skills Required:
+- Strong Python skills (NumPy, Pandas, Scikit-learn)
+- Experience with TensorFlow or PyTorch
+- Understanding of deep learning architectures
+- Knowledge of cloud ML platforms (AWS Sagemaker, GCP AI)
+- Proficiency in statistics and mathematics

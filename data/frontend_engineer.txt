@@ -1,0 +1,16 @@
+Job Title: Frontend Engineer
+
+We are looking for a passionate Frontend Engineer to create user-friendly web pages and interfaces.
+
+Responsibilities:
+- Build pixel-perfect web interfaces
+- Optimize UI for performance and usability
+- Ensure cross-browser and mobile compatibility
+- Work closely with designers and backend developers
+
+Skills Required:
+- Proficient in HTML5, CSS3, JavaScript (ES6+)
+- Experience with React, Angular, or Vue.js
+- Familiarity with build tools (Webpack, Babel)
+- Understanding of responsive and adaptive design
+- Knowledge of web accessibility standards

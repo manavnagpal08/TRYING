@@ -1,0 +1,14 @@
+Mobile App Developer
+
+Seeking a Mobile App Developer to build and maintain high-quality mobile applications.
+
+Responsibilities:
+- Design and build advanced apps for Android/iOS
+- Collaborate with cross-functional teams
+- Continuously discover, evaluate, and implement new technologies
+
+Required Skills:
+- Proficiency in Flutter or React Native
+- Experience with Android Studio or Xcode
+- Familiarity with REST APIs, Firebase
+- Published at least one app on Google Play or App Store
