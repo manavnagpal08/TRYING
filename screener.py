@@ -155,7 +155,7 @@ def extract_years_of_experience(text):
     text = text.lower()
     total_months = 0
     job_date_ranges = re.findall(
-        r'(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})\s*(?:to|–|-)\s*(present|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})',
+        r'(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})\s*(?:to|–|-)\s*(present|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-2]*\.?\s+\d{4})',
         text
     )
 
@@ -218,50 +218,49 @@ def extract_name(text):
             return name.title()
     return None
 
-# --- Generative AI Suggestion Function (MODIFIED TO BE RULE-BASED) ---
+# --- Generative AI Suggestion Function (MODIFIED TO BE CONCISE AND RULE-BASED) ---
 @st.cache_data(show_spinner="Generating AI Suggestion...")
 def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text):
     """
-    Generates a detailed AI suggestion based on rules, as the Generative AI API is not working.
+    Generates a concise AI suggestion based on rules.
     """
-    overall_fit = "Low Fit"
-    recommendation = "Declined."
-    strengths = []
-    gaps = []
+    overall_fit = ""
+    recommendation = ""
+    strengths_summary = []
+    gaps_summary = []
 
     # Define thresholds and generate suggestions based on score, years_exp, and semantic_similarity
     if score >= 90 and years_exp >= 5 and semantic_similarity >= 0.8:
         overall_fit = "Strong Fit"
-        recommendation = "Highly Recommended for Interview."
-        strengths.append("Exceptional alignment with job requirements and extensive relevant experience.")
-        gaps.append("None apparent based on automated analysis; focus on cultural fit and advanced problem-solving during interview.")
+        recommendation = "Highly Recommended for Interview"
+        strengths_summary.append("Exceptional alignment with job requirements and extensive relevant experience.")
     elif score >= 75 and years_exp >= 2 and semantic_similarity >= 0.6:
         overall_fit = "Moderate Fit"
-        recommendation = "Recommended for Interview."
-        strengths.append("Good alignment with job description keywords and solid experience.")
+        recommendation = "Recommended for Interview"
+        strengths_summary.append("Good alignment with job description keywords and solid experience.")
         if years_exp < 3:
-            gaps.append(f"Experience level ({years_exp:.1f} years) is slightly below ideal; probe depth of experience during interview.")
+            gaps_summary.append(f"Experience ({years_exp:.1f} yrs) slightly below ideal; probe depth.")
         if semantic_similarity < 0.7:
-            gaps.append("Some conceptual gaps with JD; probe specific skill applications.")
+            gaps_summary.append("Some conceptual gaps with JD; probe specific skill applications.")
     else:
         overall_fit = "Low Fit"
-        recommendation = "Further Review / Likely Decline."
+        recommendation = "Further Review / Likely Decline"
         if score < 75:
-            gaps.append(f"Overall score ({score:.2f}%) indicates a significant mismatch with the job description.")
+            gaps_summary.append(f"Overall score ({score:.2f}%) indicates significant mismatch.")
         if years_exp < 2:
-            gaps.append(f"Insufficient years of experience ({years_exp:.1f} years).")
+            gaps_summary.append(f"Insufficient experience ({years_exp:.1f} yrs).")
         if semantic_similarity < 0.6:
-            gaps.append(f"Low semantic similarity ({semantic_similarity:.2f}) suggests a conceptual mismatch with the job role.")
+            gaps_summary.append(f"Low semantic similarity ({semantic_similarity:.2f}) suggests conceptual mismatch.")
 
-    return_string = f"**Overall Fit Assessment:** {overall_fit}\n"
-    if strengths:
-        return_string += f"**Key Strengths:** {'; '.join(strengths)}\n"
-    if gaps:
-        return_string += f"**Potential Gaps/Areas to Probe:** {'; '.join(gaps)}\n"
-    return_string += f"**Recommendation:** {recommendation}\n"
-    return_string += "Actionable next steps: Review matched/missing keywords and experience details for specific interview questions."
+    # Construct the concise output
+    summary_text = f"**Overall Fit:** {overall_fit}. "
+    if strengths_summary:
+        summary_text += f"**Strengths:** {'; '.join(strengths_summary)}. "
+    if gaps_summary:
+        summary_text += f"**Gaps:** {'; '.join(gaps_summary)}. "
+    summary_text += f"**Recommendation:** {recommendation}."
 
-    return return_string
+    return summary_text
 
 
 def semantic_score(resume_text, jd_text, years_exp):
@@ -419,6 +418,7 @@ if jd_text and resume_files:
         ax.imshow(wordcloud, interpolation='bilinear')
         ax.axis('off')
         st.pyplot(fig)
+        plt.close(fig) # Close the figure to free up memory
     else:
         st.info("No significant keywords to display for the Job Description. Please ensure your JD has sufficient content.")
     st.markdown("---")
@@ -510,18 +510,45 @@ if jd_text and resume_files:
             ax.text(bar.get_x() + bar.get_width()/2, yval + 1, f"{yval:.1f}", ha='center', va='bottom', fontsize=9)
         plt.tight_layout()
         st.pyplot(fig)
+        plt.close(fig) # Close the figure to free up memory
     else:
         st.info("Upload resumes to see a comparison chart.")
 
     st.markdown("---")
 
-    # --- REMOVED: Detailed Individual Candidate Analysis section to streamline the UI.
-    # Detailed insights are now expected to be viewed in the separate Analytics Dashboard.
+    # --- TOP CANDIDATE AI RECOMMENDATION (Game Changer Feature) ---
+    st.markdown("## 👑 Top Candidate AI Recommendation")
+    st.caption("A concise, AI-powered assessment for the most suitable candidate.")
+    
+    if not df.empty:
+        top_candidate = df.iloc[0] # Get the top candidate (already sorted by score)
+        st.markdown(f"### **{top_candidate['Candidate Name']}**")
+        st.markdown(f"**Score:** {top_candidate['Score (%)']:.2f}% | **Experience:** {top_candidate['Years Experience']:.1f} years | **Semantic Similarity:** {top_candidate['Semantic Similarity']:.2f}")
+        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}") # Use the concise AI suggestion
+        
+        # Action button for the top candidate
+        if top_candidate['Email'] != "Not Found":
+            mailto_link_top = create_mailto_link(
+                recipient_email=top_candidate['Email'],
+                candidate_name=top_candidate['Candidate Name'],
+                job_title=jd_option if jd_option != "Upload my own" else "Job Opportunity"
+            )
+            st.markdown(f'<a href="{mailto_link_top}" target="_blank"><button style="background-color:#00cec9;color:white;border:none;padding:10px 20px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;border-radius:8px;">📧 Invite Top Candidate for Interview</button></a>', unsafe_allow_html=True)
+        else:
+            st.info(f"Email address not found for {top_candidate['Candidate Name']}. Cannot send automated invitation.")
+        
+        st.markdown("---")
+        st.info("For detailed analytics, matched keywords, and missing skills for ALL candidates, please navigate to the **Analytics Dashboard**.")
+
+    else:
+        st.info("No candidates processed yet to determine the top candidate.")
 
 
     # === AI Recommendation for Shortlisted Candidates (Streamlined) ===
-    st.markdown("## 🌟 AI Recommendation for Shortlisted Candidates")
-    st.caption("A streamlined AI assessment to guide your next steps for candidates meeting your criteria.")
+    # This section now focuses on a quick summary for *all* shortlisted,
+    # with the top one highlighted above.
+    st.markdown("## 🌟 Shortlisted Candidates Overview")
+    st.caption("Candidates meeting your score and experience criteria.")
 
     shortlisted_candidates = df[(df['Score (%)'] >= cutoff) & (df['Years Experience'] >= min_experience)]
 
@@ -534,7 +561,8 @@ if jd_text and resume_files:
             'Score (%)',
             'Years Experience',
             'Semantic Similarity',
-            'Email' # Include email here for quick reference
+            'Email', # Include email here for quick reference
+            'AI Suggestion' # Concise AI suggestion
         ]
         
         st.dataframe(
@@ -560,33 +588,15 @@ if jd_text and resume_files:
                     format="%.2f",
                     min_value=0,
                     max_value=1
+                ),
+                "AI Suggestion": st.column_config.Column(
+                    "AI Suggestion",
+                    help="AI's concise overall assessment and recommendation"
                 )
             }
         )
+        st.info("For individual detailed AI assessments and action steps, please refer to the table above or the Analytics Dashboard.")
 
-        st.markdown("### Actions for Shortlisted Candidates:")
-        for idx, candidate in shortlisted_candidates.iterrows():
-            st.markdown(f"#### **{candidate['Candidate Name']}**")
-            # Extract and display only the 'Overall Fit Assessment' and 'Recommendation' parts
-            # The full 'AI Suggestion' is still available in the comprehensive table/analytics
-            suggestion_lines = candidate['AI Suggestion'].split('\n')
-            overall_assessment = next((line for line in suggestion_lines if 'Overall Fit Assessment:' in line), "N/A")
-            recommendation = next((line for line in suggestion_lines if 'Recommendation:' in line), "N/A")
-            
-            st.write(overall_assessment)
-            st.write(recommendation)
-
-            if candidate['Email'] != "Not Found":
-                st.write(f"📧 **Contact:** {candidate['Email']}")
-                mailto_link = create_mailto_link(
-                    recipient_email=candidate['Email'],
-                    candidate_name=candidate['Candidate Name'],
-                    job_title=jd_option if jd_option != "Upload my own" else "Job Opportunity"
-                )
-                st.markdown(f'<a href="{mailto_link}" target="_blank"><button style="background-color:#4CAF50;color:white;border:none;padding:10px 20px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;border-radius:8px;">📧 Send Interview Invitation</button></a>', unsafe_allow_html=True)
-            else:
-                st.info(f"Email address not found for {candidate['Candidate Name']}. Cannot send automated invitation.")
-            st.markdown("---")
     else:
         st.warning("No candidates met the defined screening criteria (score cutoff and minimum experience). You might consider adjusting the sliders or reviewing the uploaded resumes/JD.")
 
@@ -656,3 +666,5 @@ if jd_text and resume_files:
     )
 
     st.info("Remember to check the Analytics Dashboard for in-depth visualizations of skill overlaps, gaps, and other metrics!")
+else:
+    st.info("Please upload a Job Description and at least one Resume to begin the screening process.")
