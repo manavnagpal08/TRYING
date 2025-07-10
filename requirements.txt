@@ -11,3 +11,4 @@ torch
 NLTK
 firebase-admin
 simplejson
+google-generativeai
