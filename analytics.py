@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
 import os
-import plotly.express as px # For more interactive plots
+import plotly.express as px
 
 # --- Page Styling ---
 st.set_page_config(layout="wide", page_title="Resume Screening Analytics")
@@ -40,42 +40,44 @@ st.markdown('<div class="analytics-box">', unsafe_allow_html=True)
 st.markdown("## 📊 Screening Analytics Dashboard")
 
 # --- Load Data ---
-df = pd.DataFrame() # Initialize an empty DataFrame
-
-# Prioritize loading from session state
-if 'screening_results' in st.session_state and st.session_state['screening_results']:
-    try:
-        df = pd.DataFrame(st.session_state['screening_results'])
-        st.info("✅ Loaded screening results from current session.")
-    except Exception as e:
-        st.error(f"Error loading results from session state: {e}")
-        df = pd.DataFrame() # Reset to empty if error
-else:
-    # Fallback to results.csv if session state is empty or not set
-    data_source = "results.csv"
-    if os.path.exists(data_source):
+@st.cache_data(show_spinner=False)
+def load_screening_data():
+    """Loads screening results, prioritizing session state, then results.csv."""
+    if 'screening_results' in st.session_state and st.session_state['screening_results']:
         try:
-            df = pd.read_csv(data_source)
-            st.info("📁 Loaded existing results from `results.csv` (No session data found).")
-        except pd.errors.EmptyDataError:
-            st.warning("`results.csv` is empty. No screening data to display yet.")
-            df = pd.DataFrame() # Ensure df is empty on empty file
+            st.info("✅ Loaded screening results from current session.")
+            return pd.DataFrame(st.session_state['screening_results'])
         except Exception as e:
-            st.error(f"Error reading `results.csv`: {e}")
-            df = pd.DataFrame() # Reset to empty if error
+            st.error(f"Error loading results from session state: {e}")
+            return pd.DataFrame() # Return empty DataFrame on error
     else:
-        st.warning("⚠️ No screening data found in current session or `results.csv`. Please run the screener first.")
-        df = pd.DataFrame() # Ensure df is empty if file not found
+        data_source = "results.csv"
+        if os.path.exists(data_source):
+            try:
+                df_from_csv = pd.read_csv(data_source)
+                if df_from_csv.empty:
+                    st.warning("`results.csv` is empty. No screening data to display yet.")
+                else:
+                    st.info("📁 Loaded existing results from `results.csv` (No session data found).")
+                return df_from_csv
+            except pd.errors.EmptyDataError:
+                st.warning("`results.csv` is empty. No screening data to display yet.")
+                return pd.DataFrame() # Return empty DataFrame if file is empty
+            except Exception as e:
+                st.error(f"Error reading `results.csv`: {e}")
+                return pd.DataFrame() # Return empty DataFrame on error
+        else:
+            st.warning("⚠️ No screening data found in current session or `results.csv`. Please run the screener first.")
+            return pd.DataFrame() # Return empty DataFrame if file not found
+
+df = load_screening_data()
 
 # Check if DataFrame is still empty after loading attempts
 if df.empty:
     st.info("No data available for analytics. Please screen some resumes first.")
     st.stop()
 
-# --- Essential Column Check (Updated for Robustness) ---
-# These are the absolute minimum columns required for the dashboard to function meaningfully.
-# Other columns like 'AI Suggestion', 'Matched Keywords', 'Missing Skills' are now handled as optional
-# for their specific display sections.
+# --- Essential Column Check ---
 essential_core_columns = ['Score (%)', 'Years Experience', 'File Name', 'Candidate Name']
 
 missing_essential_columns = [col for col in essential_core_columns if col not in df.columns]
@@ -85,19 +87,17 @@ if missing_essential_columns:
              " Please ensure your screening process generates at least these required data fields.")
     st.stop()
 
-
-# --- Filters Section (Moved from Sidebar) ---
+# --- Filters Section ---
 st.markdown("### 🔍 Filter Results")
 filter_cols = st.columns(3)
 
 with filter_cols[0]:
-    # Ensure min/max values are based on the *original* df to allow full range selection
     min_score, max_score = float(df['Score (%)'].min()), float(df['Score (%)'].max())
     score_range = st.slider(
         "Filter by Score (%)",
         min_value=min_score,
         max_value=max_score,
-        value=(min_score, max_score), # Default to full range
+        value=(min_score, max_score),
         step=1.0,
         key="score_filter"
     )
@@ -108,7 +108,7 @@ with filter_cols[1]:
         "Filter by Years Experience",
         min_value=min_exp,
         max_value=max_exp,
-        value=(min_exp, max_exp), # Default to full range
+        value=(min_exp, max_exp),
         step=0.5,
         key="exp_filter"
     )
@@ -118,7 +118,7 @@ with filter_cols[2]:
         "Set Shortlisting Cutoff Score (%)",
         min_value=0,
         max_value=100,
-        value=80, # Default cutoff
+        value=80,
         step=1,
         key="shortlist_filter"
     )
@@ -127,16 +127,14 @@ with filter_cols[2]:
 filtered_df = df[
     (df['Score (%)'] >= score_range[0]) & (df['Score (%)'] <= score_range[1]) &
     (df['Years Experience'] >= exp_range[0]) & (df['Years Experience'] <= exp_range[1])
-].copy() # Use .copy() to avoid SettingWithCopyWarning
+].copy()
 
 if filtered_df.empty:
     st.warning("No data matches the selected filters. Please adjust your criteria.")
     st.stop()
 
 # Add Shortlisted/Not Shortlisted column to filtered_df for plotting
-# Ensure this column is created *after* filtering
 filtered_df['Shortlisted'] = filtered_df['Score (%)'].apply(lambda x: f"Yes (Score >= {shortlist_threshold}%)" if x >= shortlist_threshold else "No")
-
 
 # --- Metrics ---
 st.markdown("### 📈 Key Metrics")
@@ -151,14 +149,13 @@ st.divider()
 
 # --- Detailed Candidate Table ---
 st.markdown("### 📋 Filtered Candidates List")
-# Define the columns to display for the dataframe dynamically
 display_cols_for_table = ['File Name', 'Candidate Name', 'Score (%)', 'Years Experience', 'Shortlisted']
 
 if 'Matched Keywords' in filtered_df.columns:
     display_cols_for_table.append('Matched Keywords')
 if 'Missing Skills' in filtered_df.columns:
     display_cols_for_table.append('Missing Skills')
-if 'AI Suggestion' in filtered_df.columns: # Added this check for AI Suggestion
+if 'AI Suggestion' in filtered_df.columns:
     display_cols_for_table.append('AI Suggestion')
 
 st.dataframe(
@@ -167,7 +164,7 @@ st.dataframe(
 )
 
 # --- Download Filtered Data ---
-@st.cache_data # Cache this function to avoid re-running on every interaction
+@st.cache_data
 def convert_df_to_csv(df_to_convert):
     return df_to_convert.to_csv(index=False).encode('utf-8')
 
@@ -193,6 +190,7 @@ with tab1:
     ax_hist.set_xlabel("Score (%)")
     ax_hist.set_ylabel("Number of Candidates")
     st.pyplot(fig_hist)
+    plt.close(fig_hist) # Close the figure to free up memory
 
 with tab2:
     st.markdown("#### Experience Distribution")
@@ -201,6 +199,7 @@ with tab2:
     ax_exp.set_xlabel("Years of Experience")
     ax_exp.set_ylabel("Number of Candidates")
     st.pyplot(fig_exp)
+    plt.close(fig_exp) # Close the figure to free up memory
 
 with tab3:
     st.markdown("#### Shortlist Breakdown")
@@ -210,9 +209,11 @@ with tab3:
             names=shortlist_counts.index,
             values=shortlist_counts.values,
             title=f"Candidates Shortlisted vs. Not Shortlisted (Cutoff: {shortlist_threshold}%)",
-            color_discrete_sequence=px.colors.qualitative.Pastel # Use a nice color sequence
+            color_discrete_sequence=px.colors.qualitative.Pastel
         )
         st.plotly_chart(fig_pie, use_container_width=True)
+        # Plotly figures are automatically closed by Streamlit
+
     else:
         st.info("Not enough data to generate Shortlist Breakdown.")
 
@@ -222,23 +223,22 @@ with tab4:
         filtered_df,
         x="Years Experience",
         y="Score (%)",
-        hover_name="Candidate Name", # Show candidate name on hover
-        color="Shortlisted", # Color points by shortlisted status
+        hover_name="Candidate Name",
+        color="Shortlisted",
         title="Candidate Score vs. Years Experience",
         labels={"Years Experience": "Years of Experience", "Score (%)": "Matching Score (%)"},
-        trendline="ols", # Add a linear regression trendline
+        trendline="ols",
         color_discrete_map={f"Yes (Score >= {shortlist_threshold}%)": "green", "No": "red"}
     )
     st.plotly_chart(fig_scatter, use_container_width=True)
+    # Plotly figures are automatically closed by Streamlit
 
 
 with tab5:
     col_wc1, col_wc2 = st.columns(2)
     with col_wc1:
         st.markdown("#### ☁️ Common Skills WordCloud")
-        # Check for presence of 'Matched Keywords' column before processing
         if 'Matched Keywords' in filtered_df.columns and not filtered_df['Matched Keywords'].empty:
-            # Flatten list of lists for keywords, handle NaN and empty strings
             all_keywords = [
                 kw.strip() for kws in filtered_df['Matched Keywords'].dropna()
                 for kw in str(kws).split(',') if kw.strip()
@@ -249,6 +249,7 @@ with tab5:
                 ax_wc.imshow(wc, interpolation='bilinear')
                 ax_wc.axis('off')
                 st.pyplot(fig_wc)
+                plt.close(fig_wc) # Close the figure
             else:
                 st.info("No common skills to display in the WordCloud for filtered data.")
         else:
@@ -256,9 +257,7 @@ with tab5:
     
     with col_wc2:
         st.markdown("#### ❌ Top Missing Skills")
-        # Check for presence of 'Missing Skills' column before processing
         if 'Missing Skills' in filtered_df.columns and not filtered_df['Missing Skills'].empty:
-            # Flatten list of lists for missing skills, handle NaN and empty strings
             all_missing = pd.Series([
                 s.strip() for row in filtered_df['Missing Skills'].dropna()
                 for s in str(row).split(',') if s.strip()
@@ -271,6 +270,7 @@ with tab5:
                 ax_ms.set_xlabel("Count")
                 ax_ms.set_ylabel("Missing Skill")
                 st.pyplot(fig_ms)
+                plt.close(fig_ms) # Close the figure
             else:
                 st.info("No top missing skills to display for filtered data.")
         else:
