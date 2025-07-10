@@ -154,8 +154,9 @@ def extract_years_of_experience(text):
     """Extracts years of experience from a given text by parsing date ranges or keywords."""
     text = text.lower()
     total_months = 0
+    # Corrected regex: changed '[a-2]*' to '[a-z]*'
     job_date_ranges = re.findall(
-        r'(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})\s*(?:to|–|-)\s*(present|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-2]*\.?\s+\d{4})',
+        r'(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})\s*(?:to|–|-)\s*(present|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})',
         text
     )
 
@@ -357,8 +358,6 @@ def create_mailto_link(recipient_email, candidate_name, job_title="Job Opportuni
     body = urllib.parse.quote(f"""Dear {candidate_name},
 
 We were very impressed with your profile and would like to invite you for an interview for the {job_title} position.
-
-Please let us know your availability in the coming days.
 
 Best regards,
 
