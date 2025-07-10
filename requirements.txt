@@ -13,3 +13,4 @@ firebase-admin
 simplejson
 google-generativeai
 plotly
+statsmodels 
