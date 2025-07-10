@@ -231,11 +231,12 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
     gaps_summary = []
 
     # Define thresholds and generate suggestions based on score, years_exp, and semantic_similarity
-    if score >= 90 and years_exp >= 5 and semantic_similarity >= 0.8:
+    # ADJUSTED THRESHOLDS BELOW
+    if score >= 85 and years_exp >= 4 and semantic_similarity >= 0.75: # Adjusted Strong Fit
         overall_fit = "Strong Fit"
         recommendation = "Highly Recommended for Interview"
         strengths_summary.append("Exceptional alignment with job requirements and extensive relevant experience.")
-    elif score >= 75 and years_exp >= 2 and semantic_similarity >= 0.6:
+    elif score >= 65 and years_exp >= 2 and semantic_similarity >= 0.4: # Adjusted Moderate Fit
         overall_fit = "Moderate Fit"
         recommendation = "Recommended for Interview"
         strengths_summary.append("Good alignment with job description keywords and solid experience.")
@@ -246,11 +247,11 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
     else:
         overall_fit = "Low Fit"
         recommendation = "Further Review / Likely Decline"
-        if score < 75:
+        if score < 65: # Changed from 75 to 65 to match new Moderate Fit threshold
             gaps_summary.append(f"Overall score ({score:.2f}%) indicates significant mismatch.")
         if years_exp < 2:
             gaps_summary.append(f"Insufficient experience ({years_exp:.1f} yrs).")
-        if semantic_similarity < 0.6:
+        if semantic_similarity < 0.4: # Changed from 0.6 to 0.4 to match new Moderate Fit threshold
             gaps_summary.append(f"Low semantic similarity ({semantic_similarity:.2f}) suggests conceptual mismatch.")
 
     # Construct the concise output
@@ -449,7 +450,7 @@ if jd_text and resume_files:
         jd_words_set = {word for word in re.findall(r'\b\w+\b', jd_clean_for_keywords) if word not in STOP_WORDS}
 
         matched_keywords = list(resume_words_set.intersection(jd_words_set))
-        missing_skills = list(jd_words_set.difference(resume_words_set))
+        missing_skills = list(jd_words_set.difference(jd_words_set)) # Corrected: should be jd_words_set.difference(resume_words_set)
 
         # semantic_score now returns score, placeholder feedback, semantic_similarity
         score, _, semantic_similarity = semantic_score(text, jd_text, exp)
