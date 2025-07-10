@@ -486,6 +486,10 @@ if jd_text and resume_files:
     df = pd.DataFrame(results).sort_values(by="Score (%)", ascending=False).reset_index(drop=True)
 
     st.session_state['screening_results'] = results
+    
+    # Save results to CSV for analytics.py to use
+    df.to_csv("results.csv", index=False)
+
 
     # --- Overall Candidate Comparison Chart ---
     st.markdown("## 📊 Candidate Score Comparison")
@@ -511,77 +515,73 @@ if jd_text and resume_files:
 
     st.markdown("---")
 
-    # === Detailed Individual Candidate Analysis ===
-    st.markdown("## 🔍 Detailed Candidate Insights")
-    st.caption("Dive deeper into each candidate's strengths and areas for improvement relative to the job description.")
-
-    if not df.empty:
-        for idx, row in df.iterrows():
-            candidate_display_name = row['Candidate Name']
-            
-            with st.container(border=True):
-                st.subheader(f"{idx+1}. {candidate_display_name} - Score: {row['Score (%)']:.2f}%")
-                
-                col_info, col_exp_match = st.columns([3, 1])
-
-                with col_info:
-                    st.markdown(f"**Overall Assessment:** {row['AI Suggestion']}") # This is now the detailed AI suggestion
-                    st.write(f"**Years of Experience:** {row['Years Experience']:.1f} years")
-                    st.write(f"**Contact Email:** {row['Email']}")
-                    st.write(f"**Semantic Similarity (JD vs. Resume):** **{row['Semantic Similarity']:.2f}** (Higher score indicates closer conceptual match.)")
-                    
-                    if 'Matched Keywords' in row and row['Matched Keywords']:
-                        st.write(f"**Matched Keywords:** {row['Matched Keywords']}")
-                    if 'Missing Skills' in row and row['Missing Skills']:
-                        st.write(f"**Missing Skills:** {row['Missing Skills']}")
+    # --- REMOVED: Detailed Individual Candidate Analysis section to streamline the UI.
+    # Detailed insights are now expected to be viewed in the separate Analytics Dashboard.
 
 
-                with col_exp_match:
-                    st.markdown("### Experience Match")
-                    exp_ratio = min(row['Years Experience'] / min_experience, 1.0) if min_experience > 0 else 1.0
-                    st.progress(exp_ratio)
-                    if row['Years Experience'] >= min_experience:
-                        st.success(f"Candidate has {row['Years Experience']:.1f} years, meeting or exceeding required {min_experience} years.")
-                    else:
-                        st.warning(f"Candidate has {row['Years Experience']:.1f} years, less than required {min_experience} years.")
-
-                with st.expander("📄 View Full Resume Text"):
-                    st.code(resume_text_map.get(row['File Name'], ''), height=300)
-            st.markdown("---")
-    else:
-        st.info("No candidates to display detailed analysis for yet.")
-
-    st.markdown("---")
-
-    # === AI Recommendation for Shortlisted Candidates ===
+    # === AI Recommendation for Shortlisted Candidates (Streamlined) ===
     st.markdown("## 🌟 AI Recommendation for Shortlisted Candidates")
-    st.caption("An AI-driven assessment to guide your next steps for candidates meeting your criteria.")
+    st.caption("A streamlined AI assessment to guide your next steps for candidates meeting your criteria.")
 
     shortlisted_candidates = df[(df['Score (%)'] >= cutoff) & (df['Years Experience'] >= min_experience)]
 
     if not shortlisted_candidates.empty:
         st.success(f"**{len(shortlisted_candidates)}** candidate(s) meet your specified criteria (Score ≥ {cutoff}%, Experience ≥ {min_experience} years).")
-        # Display the AI Suggestion column
-        display_shortlisted_cols = ['Candidate Name', 'Score (%)', 'Years Experience', 'Semantic Similarity', 'AI Suggestion']
-        if 'Matched Keywords' in shortlisted_candidates.columns:
-            display_shortlisted_cols.append('Matched Keywords')
-        if 'Missing Skills' in shortlisted_candidates.columns:
-            display_shortlisted_cols.append('Missing Skills')
         
-        st.dataframe(shortlisted_candidates[display_shortlisted_cols], use_container_width=True)
+        # Display a concise table for shortlisted candidates
+        display_shortlisted_summary_cols = [
+            'Candidate Name',
+            'Score (%)',
+            'Years Experience',
+            'Semantic Similarity',
+            'Email' # Include email here for quick reference
+        ]
+        
+        st.dataframe(
+            shortlisted_candidates[display_shortlisted_summary_cols],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Score (%)": st.column_config.ProgressColumn(
+                    "Score (%)",
+                    help="Matching score against job requirements",
+                    format="%f",
+                    min_value=0,
+                    max_value=100,
+                ),
+                "Years Experience": st.column_config.NumberColumn(
+                    "Years Experience",
+                    help="Total years of professional experience",
+                    format="%.1f years",
+                ),
+                "Semantic Similarity": st.column_config.NumberColumn(
+                    "Semantic Similarity",
+                    help="Conceptual similarity between JD and Resume (higher is better)",
+                    format="%.2f",
+                    min_value=0,
+                    max_value=1
+                )
+            }
+        )
 
-        st.markdown("### Next Steps Recommendation:")
+        st.markdown("### Actions for Shortlisted Candidates:")
         for idx, candidate in shortlisted_candidates.iterrows():
             st.markdown(f"#### **{candidate['Candidate Name']}**")
-            st.markdown(f"**Overall AI Assessment:** {candidate['AI Suggestion']}") # Display the generated suggestion directly
+            # Extract and display only the 'Overall Fit Assessment' and 'Recommendation' parts
+            # The full 'AI Suggestion' is still available in the comprehensive table/analytics
+            suggestion_lines = candidate['AI Suggestion'].split('\n')
+            overall_assessment = next((line for line in suggestion_lines if 'Overall Fit Assessment:' in line), "N/A")
+            recommendation = next((line for line in suggestion_lines if 'Recommendation:' in line), "N/A")
+            
+            st.write(overall_assessment)
+            st.write(recommendation)
 
             if candidate['Email'] != "Not Found":
-                st.write(f"📧 **Candidate Email:** {candidate['Email']}")
-                # --- Email Button for Shortlisted Candidate ---
+                st.write(f"📧 **Contact:** {candidate['Email']}")
                 mailto_link = create_mailto_link(
                     recipient_email=candidate['Email'],
                     candidate_name=candidate['Candidate Name'],
-                    job_title=jd_option if jd_option != "Upload my own" else "Job Opportunity" # Use selected JD name or default
+                    job_title=jd_option if jd_option != "Upload my own" else "Job Opportunity"
                 )
                 st.markdown(f'<a href="{mailto_link}" target="_blank"><button style="background-color:#4CAF50;color:white;border:none;padding:10px 20px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;border-radius:8px;">📧 Send Interview Invitation</button></a>', unsafe_allow_html=True)
             else:
@@ -597,8 +597,62 @@ if jd_text and resume_files:
         "✅ Good Fit" if row['Score (%)'] >= 75 else "⚠️ Needs Review"), axis=1)
 
     st.markdown("## 📋 Comprehensive Candidate Results Table")
-    st.caption("Full details for all processed resumes.")
+    st.caption("Full details for all processed resumes. **For deep dive analytics and keyword breakdowns, refer to the Analytics Dashboard.**")
     
-    # Display all columns except 'Resume Raw Text'
-    display_cols = [col for col in df.columns if col != 'Resume Raw Text']
-    st.dataframe(df[display_cols], use_container_width=True)
+    # Define columns to display in the comprehensive table
+    comprehensive_cols = [
+        'Candidate Name',
+        'Score (%)',
+        'Years Experience',
+        'Semantic Similarity',
+        'Tag', # Keep the custom tag
+        'Email',
+        'AI Suggestion', # This will still contain the full AI suggestion text but is in a table, not per-candidate verbose display
+        'Matched Keywords',
+        'Missing Skills',
+        # 'Resume Raw Text' # Removed from default display to keep table manageable, can be viewed in Analytics
+    ]
+    
+    # Ensure all columns exist before trying to display them
+    final_display_cols = [col for col in comprehensive_cols if col in df.columns]
+
+    st.dataframe(
+        df[final_display_cols],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Score (%)": st.column_config.ProgressColumn(
+                "Score (%)",
+                help="Matching score against job requirements",
+                format="%f",
+                min_value=0,
+                max_value=100,
+            ),
+            "Years Experience": st.column_config.NumberColumn(
+                "Years Experience",
+                help="Total years of professional experience",
+                format="%.1f years",
+            ),
+            "Semantic Similarity": st.column_config.NumberColumn(
+                "Semantic Similarity",
+                help="Conceptual similarity between JD and Resume (higher is better)",
+                format="%.2f",
+                min_value=0,
+                max_value=1
+            ),
+            "AI Suggestion": st.column_config.Column(
+                "AI Suggestion",
+                help="AI's overall assessment and recommendation"
+            ),
+            "Matched Keywords": st.column_config.Column(
+                "Matched Keywords",
+                help="Keywords found in both JD and Resume"
+            ),
+            "Missing Skills": st.column_config.Column(
+                "Missing Skills",
+                help="Key skills from JD not found in Resume"
+            ),
+        }
+    )
+
+    st.info("Remember to check the Analytics Dashboard for in-depth visualizations of skill overlaps, gaps, and other metrics!")
