@@ -277,7 +277,6 @@ def semantic_score(resume_text, jd_text, years_exp):
     score = 0.0
     feedback = "Initial assessment." # This will be overwritten by LLM
     semantic_similarity = 0.0
-    jd_coverage_percentage = 0.0 # Still calculated, but not explicitly displayed
 
     if ml_model is None or model is None:
         st.warning("ML models not loaded. Providing basic score and generic feedback.")
@@ -446,6 +445,17 @@ if jd_text and resume_files:
         email = extract_email(text)
         candidate_name = extract_name(text) or file.name.replace('.pdf', '').replace('_', ' ').title()
 
+        # Calculate Matched Keywords and Missing Skills
+        resume_clean_for_keywords = clean_text(text)
+        jd_clean_for_keywords = clean_text(jd_text)
+
+        # Filter out stop words for keyword analysis
+        resume_words_set = {word for word in re.findall(r'\b\w+\b', resume_clean_for_keywords) if word not in STOP_WORDS}
+        jd_words_set = {word for word in re.findall(r'\b\w+\b', jd_clean_for_keywords) if word not in STOP_WORDS}
+
+        matched_keywords = list(resume_words_set.intersection(jd_words_set))
+        missing_skills = list(jd_words_set.difference(resume_words_set))
+
         # semantic_score now returns score, placeholder feedback, semantic_similarity
         score, _, semantic_similarity = semantic_score(text, jd_text, exp)
         
@@ -465,7 +475,9 @@ if jd_text and resume_files:
             "Score (%)": score,
             "Years Experience": exp,
             "Email": email or "Not Found",
-            "Feedback": detailed_ai_suggestion, # Use the generated suggestion
+            "AI Suggestion": detailed_ai_suggestion, # Renamed from "Feedback" to "AI Suggestion"
+            "Matched Keywords": ", ".join(matched_keywords), # Added Matched Keywords
+            "Missing Skills": ", ".join(missing_skills),   # Added Missing Skills
             "Semantic Similarity": semantic_similarity,
             "Resume Raw Text": text
         })
@@ -517,10 +529,16 @@ if jd_text and resume_files:
                 col_info, col_exp_match = st.columns([3, 1])
 
                 with col_info:
-                    st.markdown(f"**Overall Assessment:** {row['Feedback']}") # This is now the detailed AI suggestion
+                    st.markdown(f"**Overall Assessment:** {row['AI Suggestion']}") # This is now the detailed AI suggestion
                     st.write(f"**Years of Experience:** {row['Years Experience']:.1f} years")
                     st.write(f"**Contact Email:** {row['Email']}")
                     st.write(f"**Semantic Similarity (JD vs. Resume):** **{row['Semantic Similarity']:.2f}** (Higher score indicates closer conceptual match.)")
+                    
+                    if 'Matched Keywords' in row and row['Matched Keywords']:
+                        st.write(f"**Matched Keywords:** {row['Matched Keywords']}")
+                    if 'Missing Skills' in row and row['Missing Skills']:
+                        st.write(f"**Missing Skills:** {row['Missing Skills']}")
+
 
                 with col_exp_match:
                     st.markdown("### Experience Match")
@@ -547,13 +565,19 @@ if jd_text and resume_files:
 
     if not shortlisted_candidates.empty:
         st.success(f"**{len(shortlisted_candidates)}** candidate(s) meet your specified criteria (Score ≥ {cutoff}%, Experience ≥ {min_experience} years).")
-        # Display the Feedback column which now contains the generated suggestion
-        st.dataframe(shortlisted_candidates[['Candidate Name', 'Score (%)', 'Years Experience', 'Semantic Similarity', 'Feedback']], use_container_width=True)
+        # Display the AI Suggestion column
+        display_shortlisted_cols = ['Candidate Name', 'Score (%)', 'Years Experience', 'Semantic Similarity', 'AI Suggestion']
+        if 'Matched Keywords' in shortlisted_candidates.columns:
+            display_shortlisted_cols.append('Matched Keywords')
+        if 'Missing Skills' in shortlisted_candidates.columns:
+            display_shortlisted_cols.append('Missing Skills')
+        
+        st.dataframe(shortlisted_candidates[display_shortlisted_cols], use_container_width=True)
 
         st.markdown("### Next Steps Recommendation:")
         for idx, candidate in shortlisted_candidates.iterrows():
             st.markdown(f"#### **{candidate['Candidate Name']}**")
-            st.markdown(f"**Overall AI Assessment:** {candidate['Feedback']}") # Display the generated suggestion directly
+            st.markdown(f"**Overall AI Assessment:** {candidate['AI Suggestion']}") # Display the generated suggestion directly
 
             if candidate['Email'] != "Not Found":
                 st.write(f"📧 **Candidate Email:** {candidate['Email']}")
@@ -578,8 +602,15 @@ if jd_text and resume_files:
 
     st.markdown("## 📋 Comprehensive Candidate Results Table")
     st.caption("Full details for all processed resumes.")
-    display_df = df[['Candidate Name', 'Score (%)', 'Years Experience', 'Semantic Similarity', 'Feedback', 'Tag', 'Email']]
-    st.dataframe(display_df, use_container_width=True)
+    
+    # Dynamically select columns for the final display_df
+    final_display_cols = ['Candidate Name', 'Score (%)', 'Years Experience', 'Semantic Similarity', 'AI Suggestion', 'Tag', 'Email']
+    if 'Matched Keywords' in df.columns:
+        final_display_cols.insert(4, 'Matched Keywords') # Insert after Semantic Similarity
+    if 'Missing Skills' in df.columns:
+        final_display_cols.insert(5, 'Missing Skills') # Insert after Matched Keywords
+    
+    st.dataframe(df[final_display_cols], use_container_width=True)
 
     # Add download button for results
     csv_data = df.to_csv(index=False).encode('utf-8')
