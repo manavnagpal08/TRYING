@@ -1,0 +1,13 @@
+streamlit
+pdfplumber
+pandas
+matplotlib
+wordcloud
+seaborn
+spacy
+scikit-learn
+sentence-transformers
+torch
+NLTK
+firebase-admin
+simplejson
