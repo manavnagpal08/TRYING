@@ -15,6 +15,19 @@ import collections
 from sklearn.metrics.pairwise import cosine_similarity
 import urllib.parse # For encoding mailto links
 
+# For Generative AI (Google Gemini Pro)
+import google.generativeai as genai
+
+# --- Configure Google Gemini API Key ---
+# Store your API key securely in Streamlit Secrets.
+# Create a .streamlit/secrets.toml file in your app's directory:
+# GOOGLE_API_KEY="YOUR_GEMINI_API_KEY"
+try:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+except AttributeError:
+    st.error("🚨 Google API Key not found in Streamlit Secrets. Please add it to your .streamlit/secrets.toml file.")
+    st.stop() # Stop the app if API key is missing
+
 # Download NLTK stopwords data if not already downloaded
 try:
     nltk.data.find('corpora/stopwords')
@@ -205,12 +218,52 @@ def extract_name(text):
             return name.title()
     return None
 
-def get_top_keywords(text, num_keywords=15):
-    """Extracts and returns the top N most frequent keywords from text, excluding stop words."""
-    cleaned_text = clean_text(text)
-    words = [word for word in re.findall(r'\b\w+\b', cleaned_text) if word not in STOP_WORDS]
-    word_counts = collections.Counter(words)
-    return [word for word, count in word_counts.most_common(num_keywords)]
+# --- Generative AI Suggestion Function ---
+@st.cache_data(show_spinner="Generating AI Suggestion...") # Cache to avoid repeated API calls for same input
+def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text):
+    """Generates a detailed AI suggestion using a Generative AI model (Gemini Pro)."""
+    try:
+        model_gen = genai.GenerativeModel('gemini-pro')
+        
+        prompt = f"""
+        As an AI-powered Senior Recruitment Analyst, analyze the following candidate's suitability for a job role based on their resume and the job description. Provide a comprehensive, actionable suggestion for the recruiting team.
+
+        Candidate Name: {candidate_name}
+        Overall Score (0-100%): {score:.2f}%
+        Years of Experience: {years_exp:.1f} years
+        Semantic Similarity (JD vs. Resume, 0-1): {semantic_similarity:.2f}
+        
+        Job Description:
+        ---
+        {jd_text[:1000]} # Limit JD for prompt length, adjust as needed
+        ---
+
+        Candidate Resume (Key sections for context):
+        ---
+        {resume_text[:2000]} # Limit Resume for prompt length, adjust as needed
+        ---
+
+        Based on the above, generate a detailed AI suggestion for the hiring manager. Focus on:
+        1.  **Overall Fit Assessment:** Is this candidate a strong, moderate, or low fit?
+        2.  **Key Strengths:** What are the most relevant aspects of their profile based on the JD? (e.g., specific skills, projects, experience alignment).
+        3.  **Potential Gaps/Areas to Probe:** What might be missing or what questions should be asked during an interview? (e.g., less relevant experience, missing key skills).
+        4.  **Recommendation:** Should they be shortlisted for an interview, further review, or declined?
+        5.  **Actionable next steps:** Suggest specific areas for interviewers to focus on.
+
+        Your response should be a well-structured paragraph or two, professional, and directly actionable for a recruiter.
+        """
+        
+        response = model_gen.generate_content(prompt)
+        
+        # Check if response has parts and extract text
+        if response and response.candidates and response.candidates[0].content.parts:
+            return response.candidates[0].content.parts[0].text
+        else:
+            return "AI suggestion could not be generated. Please check inputs or API response."
+
+    except Exception as e:
+        return f"Error generating AI suggestion: {e}. Please ensure your API key is correct and try again."
+
 
 def semantic_score(resume_text, jd_text, years_exp):
     """
@@ -222,16 +275,12 @@ def semantic_score(resume_text, jd_text, years_exp):
     resume_clean = clean_text(resume_text)
 
     score = 0.0
-    feedback = "Initial assessment."
+    feedback = "Initial assessment." # This will be overwritten by LLM
     semantic_similarity = 0.0
     jd_coverage_percentage = 0.0 # Still calculated, but not explicitly displayed
 
     if ml_model is None or model is None:
-        # Fallback if ML models are not loaded
-        # For simplicity, if ML model isn't there, we don't calculate advanced metrics
-        # and provide a generic feedback.
-        # In a real scenario, you might want to implement a simpler keyword-based fallback score here.
-        st.warning("ML models not loaded. Providing basic score and feedback.")
+        st.warning("ML models not loaded. Providing basic score and generic feedback.")
         # Simplified fallback for score and feedback
         resume_words = {word for word in re.findall(r'\b\w+\b', resume_clean) if word not in STOP_WORDS}
         jd_words = {word for word in re.findall(r'\b\w+\b', jd_clean) if word not in STOP_WORDS}
@@ -243,12 +292,7 @@ def semantic_score(resume_text, jd_text, years_exp):
         basic_score += min(years_exp * 5, 30) # Add up to 30 for experience
         score = round(min(basic_score, 100), 2)
         
-        if score > 70:
-            feedback = "Good potential based on keyword match and experience. Manual review recommended."
-        elif score > 40:
-            feedback = "Moderate potential. Review for transferable skills."
-        else:
-            feedback = "Lower match based on basic keyword alignment. Manual review advised."
+        feedback = "Due to missing ML models, a detailed AI suggestion cannot be provided. Basic score derived from keyword overlap. Manual review is highly recommended."
         
         return score, feedback, 0.0 # Return 0 for semantic similarity if ML not available
 
@@ -285,19 +329,12 @@ def semantic_score(resume_text, jd_text, years_exp):
 
         score = float(np.clip(blended_score, 0, 100))
 
-        if score > 90:
-            feedback = "Excellent fit: Outstanding alignment with job requirements, high conceptual match, and strong relevant experience. **Highly Recommended for Interview.**"
-        elif score >= 75:
-            feedback = "Good fit: Solid alignment with the role, good conceptual match, and relevant experience demonstrated. **Recommended for Further Review/Interview.**"
-        elif score >= 60:
-            feedback = "Moderate fit: Decent potential, but some areas for improvement in deeper experience matching or nuanced skill alignment. **Consider for a deeper dive.**"
-        else:
-            feedback = "Initial assessment indicates a lower match based on semantic alignment and experience. This candidate may possess transferable skills or unique experiences not immediately highlighted, but a more **in-depth manual review is essential to determine suitability.**"
+        # Feedback will now be generated by LLM, not based on fixed rules here.
+        # This function only returns the score and semantic similarity.
+        # The AI suggestion text will be generated separately for display.
+        
+        return round(score, 2), "AI suggestion will be generated...", round(semantic_similarity, 2) # Placeholder feedback
 
-        if score < 10: # Fallback to a "not a good fit" for extremely low scores
-             feedback = "Minimal alignment with the job requirements. This candidate is likely not a good fit for this role."
-
-        return round(score, 2), feedback, round(semantic_similarity, 2)
 
     except Exception as e:
         st.warning(f"Error during semantic scoring, falling back to basic: {e}")
@@ -312,12 +349,7 @@ def semantic_score(resume_text, jd_text, years_exp):
         basic_score += min(years_exp * 5, 30) # Add up to 30 for experience
         score = round(min(basic_score, 100), 2)
 
-        if score > 70:
-            feedback = "Good potential based on keyword match and experience. Manual review recommended."
-        elif score > 40:
-            feedback = "Moderate potential. Review for transferable skills."
-        else:
-            feedback = "Lower match based on basic keyword alignment. Manual review advised."
+        feedback = "Due to an error in core AI model, a detailed AI suggestion cannot be provided. Basic score derived. Manual review is highly recommended."
 
         return score, feedback, 0.0 # Return 0 for semantic similarity on fallback
 
@@ -414,7 +446,18 @@ if jd_text and resume_files:
         email = extract_email(text)
         candidate_name = extract_name(text) or file.name.replace('.pdf', '').replace('_', ' ').title()
 
-        score, feedback, semantic_similarity = semantic_score(text, jd_text, exp)
+        # semantic_score now returns score, placeholder feedback, semantic_similarity
+        score, _, semantic_similarity = semantic_score(text, jd_text, exp)
+        
+        # Generate the detailed AI suggestion using Gemini Pro
+        detailed_ai_suggestion = generate_ai_suggestion(
+            candidate_name=candidate_name,
+            score=score,
+            years_exp=exp,
+            semantic_similarity=semantic_similarity,
+            jd_text=jd_text,
+            resume_text=text
+        )
 
         results.append({
             "File Name": file.name,
@@ -422,7 +465,7 @@ if jd_text and resume_files:
             "Score (%)": score,
             "Years Experience": exp,
             "Email": email or "Not Found",
-            "Feedback": feedback,
+            "Feedback": detailed_ai_suggestion, # Use the generated suggestion
             "Semantic Similarity": semantic_similarity,
             "Resume Raw Text": text
         })
@@ -474,7 +517,7 @@ if jd_text and resume_files:
                 col_info, col_exp_match = st.columns([3, 1])
 
                 with col_info:
-                    st.markdown(f"**Overall Assessment:** {row['Feedback']}")
+                    st.markdown(f"**Overall Assessment:** {row['Feedback']}") # This is now the detailed AI suggestion
                     st.write(f"**Years of Experience:** {row['Years Experience']:.1f} years")
                     st.write(f"**Contact Email:** {row['Email']}")
                     st.write(f"**Semantic Similarity (JD vs. Resume):** **{row['Semantic Similarity']:.2f}** (Higher score indicates closer conceptual match.)")
@@ -504,16 +547,13 @@ if jd_text and resume_files:
 
     if not shortlisted_candidates.empty:
         st.success(f"**{len(shortlisted_candidates)}** candidate(s) meet your specified criteria (Score ≥ {cutoff}%, Experience ≥ {min_experience} years).")
-        st.dataframe(shortlisted_candidates[['Candidate Name', 'Score (%)', 'Years Experience', 'Feedback', 'Semantic Similarity']], use_container_width=True)
+        # Display the Feedback column which now contains the generated suggestion
+        st.dataframe(shortlisted_candidates[['Candidate Name', 'Score (%)', 'Years Experience', 'Semantic Similarity', 'Feedback']], use_container_width=True)
 
         st.markdown("### Next Steps Recommendation:")
         for idx, candidate in shortlisted_candidates.iterrows():
             st.markdown(f"#### **{candidate['Candidate Name']}**")
-            st.write(f"**Overall Fit:** {candidate['Feedback']}")
-            
-            # --- AI Suggestion ---
-            ai_suggestion_text = f"Given their high score of **{candidate['Score (%)']:.2f}%**, strong **semantic similarity of {candidate['Semantic Similarity']:.2f}**, and solid experience, **we strongly recommend proceeding with an interview for {candidate['Candidate Name']}**. Their profile indicates a high likelihood of success in this role. Focus on exploring their practical application of relevant skills during the interview."
-            st.write(f"**AI Suggestion:** {ai_suggestion_text}")
+            st.markdown(f"**Overall AI Assessment:** {candidate['Feedback']}") # Display the generated suggestion directly
 
             if candidate['Email'] != "Not Found":
                 st.write(f"📧 **Candidate Email:** {candidate['Email']}")
