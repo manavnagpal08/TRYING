@@ -70,36 +70,64 @@ else:
 # Check if DataFrame is still empty after loading attempts
 if df.empty:
     st.info("No data available for analytics. Please screen some resumes first.")
-    st.stop() # Stop execution if no data is available
+    st.stop()
+
+# --- Essential Column Check (Added for Robustness) ---
+# Ensure these core columns exist for calculations and filters
+required_columns = ['Score (%)', 'Years Experience', 'File Name', 'Candidate Name', 'AI Suggestion']
+# Also include columns used for 'Matched Keywords' and 'Missing Skills' sections if they are expected
+# but these have separate checks later, so let's stick to the ones needed for initial metrics/filters
+# 'Matched Keywords', 'Missing Skills' are optional for their respective plots, but if missing from dataframe
+# when accessed in the dataframe display, it will also cause issues.
+# So better to ensure they are available for the main dataframe display.
+optional_for_plots_but_good_for_df = ['Matched Keywords', 'Missing Skills']
+all_expected_columns = required_columns + optional_for_plots_but_good_for_df
+
+missing_required_columns = [col for col in all_expected_columns if col not in df.columns]
+
+if missing_required_columns:
+    st.error(f"Error: The loaded data is missing essential columns for analytics: {', '.join(missing_required_columns)}."
+             " Please ensure your screening process generates all required data in `results.csv` "
+             "or `st.session_state['screening_results']`.")
+    st.stop()
 
 
-# --- Filters Section ---
-st.sidebar.header("🎯 Filter Results")
-min_score, max_score = float(df['Score (%)'].min()), float(df['Score (%)'].max())
-score_range = st.sidebar.slider(
-    "Filter by Score (%)",
-    min_value=min_score,
-    max_value=max_score,
-    value=(min_score, max_score),
-    step=1.0
-)
+# --- Filters Section (Moved from Sidebar) ---
+st.markdown("### 🔍 Filter Results")
+filter_cols = st.columns(3)
 
-min_exp, max_exp = float(df['Years Experience'].min()), float(df['Years Experience'].max())
-exp_range = st.sidebar.slider(
-    "Filter by Years Experience",
-    min_value=min_exp,
-    max_value=max_exp,
-    value=(min_exp, max_exp),
-    step=0.5
-)
+with filter_cols[0]:
+    # Ensure min/max values are based on the *original* df to allow full range selection
+    min_score, max_score = float(df['Score (%)'].min()), float(df['Score (%)'].max())
+    score_range = st.slider(
+        "Filter by Score (%)",
+        min_value=min_score,
+        max_value=max_score,
+        value=(min_score, max_score), # Default to full range
+        step=1.0,
+        key="score_filter"
+    )
 
-shortlist_threshold = st.sidebar.slider(
-    "Set Shortlisting Cutoff Score (%)",
-    min_value=0,
-    max_value=100,
-    value=80, # Default cutoff
-    step=1
-)
+with filter_cols[1]:
+    min_exp, max_exp = float(df['Years Experience'].min()), float(df['Years Experience'].max())
+    exp_range = st.slider(
+        "Filter by Years Experience",
+        min_value=min_exp,
+        max_value=max_exp,
+        value=(min_exp, max_exp), # Default to full range
+        step=0.5,
+        key="exp_filter"
+    )
+
+with filter_cols[2]:
+    shortlist_threshold = st.slider(
+        "Set Shortlisting Cutoff Score (%)",
+        min_value=0,
+        max_value=100,
+        value=80, # Default cutoff
+        step=1,
+        key="shortlist_filter"
+    )
 
 # Apply filters
 filtered_df = df[
@@ -112,6 +140,7 @@ if filtered_df.empty:
     st.stop()
 
 # Add Shortlisted/Not Shortlisted column to filtered_df for plotting
+# Ensure this column is created *after* filtering
 filtered_df['Shortlisted'] = filtered_df['Score (%)'].apply(lambda x: f"Yes (Score >= {shortlist_threshold}%)" if x >= shortlist_threshold else "No")
 
 
@@ -128,9 +157,15 @@ st.divider()
 
 # --- Detailed Candidate Table ---
 st.markdown("### 📋 Filtered Candidates List")
+# Define the columns to display for the dataframe. Use a list to ensure order.
+display_cols_for_table = ['File Name', 'Candidate Name', 'Score (%)', 'Years Experience', 'Shortlisted', 'AI Suggestion']
+if 'Matched Keywords' in filtered_df.columns:
+    display_cols_for_table.insert(5, 'Matched Keywords') # Insert at specific position
+if 'Missing Skills' in filtered_df.columns:
+    display_cols_for_table.insert(6, 'Missing Skills') # Insert after Matched Keywords
+
 st.dataframe(
-    filtered_df[['File Name', 'Candidate Name', 'Score (%)', 'Years Experience', 'Shortlisted', 'Matched Keywords', 'Missing Skills', 'AI Suggestion']]
-    .sort_values(by="Score (%)", ascending=False),
+    filtered_df[display_cols_for_table].sort_values(by="Score (%)", ascending=False),
     use_container_width=True
 )
 
@@ -195,7 +230,7 @@ with tab4:
         title="Candidate Score vs. Years Experience",
         labels={"Years Experience": "Years of Experience", "Score (%)": "Matching Score (%)"},
         trendline="ols", # Add a linear regression trendline
-        color_discrete_map={"Yes (Score >= {})".format(shortlist_threshold): "green", "No": "red"}
+        color_discrete_map={f"Yes (Score >= {shortlist_threshold}%)": "green", "No": "red"}
     )
     st.plotly_chart(fig_scatter, use_container_width=True)
 
