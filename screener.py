@@ -22,7 +22,6 @@ import os # For os.path.exists, os.listdir
 
 # --- Database Configuration ---
 DATABASE_FILE = "screening_data.db"
-
 @st.cache_resource
 def init_db():
     st.info(f"Attempting to initialize database at: {os.path.abspath(DATABASE_FILE)}")
@@ -30,7 +29,8 @@ def init_db():
     try:
         conn = sqlite3.connect(DATABASE_FILE)
         c = conn.cursor()
-        # IMPORTANT: Ensure 'years_experience', 'email', and 'ai_suggestion' columns are explicitly added here.
+        # IMPORTANT: Column names here should match the CSV schema where applicable,
+        # and other derived/app-specific columns.
         c.execute('''
             CREATE TABLE IF NOT EXISTS results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,15 +38,15 @@ def init_db():
                 job_description_hash TEXT,
                 job_description_summary TEXT,
                 candidate_name TEXT,
-                predicted_score REAL,
+                predicted_score REAL, -- This is the model's output, not directly from CSV 'numeric_score'
                 keyword_match REAL,
                 section_completeness REAL,
                 semantic_similarity REAL,
                 length_score REAL,
                 shortlisted BOOLEAN,
                 full_resume_text TEXT,
-                ai_suggestion TEXT,
-                years_experience REAL,
+                detailed_ai_suggestion TEXT, -- Matches CSV 'detailed_ai_suggestion'
+                years_exp REAL,             -- Matches CSV 'years_exp'
                 email TEXT
             )
         ''')
@@ -428,77 +428,11 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
     return " ".join(summary_parts)
 
 
-# --- Main Scoring Function ---
-def get_screening_features_and_score(job_description, resume_text):
-    """
-    Calculates features, predicts score using ML model, and prepares display scores.
-    """
-    if ml_screening_model is None or sentence_model is None:
-        st.error("ML models not loaded. Cannot predict score.")
-        return {
-            "predicted_score": 0.0, "keyword_match_score": 0.0,
-            "section_completeness_score": 0.0, "semantic_similarity": 0.0,
-            "length_score": 0.0, "raw_resume_sections": {}, "years_experience": 0.0
-        }
-
-    # --- 1. Create ML Features (772 features for prediction) ---
-    try:
-        ml_features = create_ml_features(job_description, resume_text)
-    except RuntimeError as e:
-        st.error(f"Error creating ML features: {e}")
-        return {
-            "predicted_score": 0.0, "keyword_match_score": 0.0,
-            "section_completeness_score": 0.0, "semantic_similarity": 0.0,
-            "length_score": 0.0, "raw_resume_sections": {}, "years_experience": 0.0
-        }
-
-    # --- 2. Predict Score using ML Model ---
-    try:
-        predicted_score = ml_screening_model.predict(ml_features)[0]
-        predicted_score = max(0.0, min(100.0, predicted_score)) # Clamp score to 0-100
-    except Exception as e:
-        st.error(f"Error predicting score with ML model: {e}")
-        predicted_score = 0.0
-
-    # --- 3. Calculate Display Features (for UI and AI Suggestion) ---
-    # These are the 4 human-interpretable scores, recalculated from raw texts
-    cleaned_jd = clean_text(job_description)
-    cleaned_resume = clean_text(resume_text)
-
-    # Keyword Match Score (for display)
-    jd_keywords_set = set(get_top_keywords(cleaned_jd))
-    resume_words_set = {word for word in re.findall(r'\b\w+\b', cleaned_resume) if word not in ALL_STOP_WORDS} # Ensure resume_words_set is defined
-    keyword_overlap_count_display = len(jd_keywords_set.intersection(resume_words_set))
-    keyword_match_score_display = (keyword_overlap_count_display / len(jd_keywords_set)) * 100 if len(jd_keywords_set) > 0 else 0.0
-
-    # Section Completeness Score (for display)
-    resume_sections = extract_sections(cleaned_resume)
-    section_completeness_score_display = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
-
-    # Semantic Similarity (for display - re-calculate using the clean text embeddings)
-    jd_embedding_display = sentence_model.encode(cleaned_jd)
-    resume_embedding_display = sentence_model.encode(cleaned_resume)
-    semantic_similarity_display = cosine_similarity(jd_embedding_display.reshape(1, -1), resume_embedding_display.reshape(1, -1))[0][0] * 100
-
-    # Length Score (for display)
-    length_score_display = calculate_length_score(cleaned_resume)
-
-    return {
-        "predicted_score": predicted_score,
-        "keyword_match_score": keyword_match_score_display,
-        "section_completeness_score": section_completeness_score_display,
-        "semantic_similarity": semantic_similarity_display,
-        "length_score": length_score_display,
-        "raw_resume_sections": resume_sections,
-        "years_experience": extract_years_of_experience(resume_text) # Also return years_exp for AI suggestion
-    }
-
-
 # --- Database Operations ---
 def get_jd_hash(jd_text):
     return hashlib.md5(jd_text.encode('utf-8')).hexdigest()
 
-def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, scores, full_resume_text, ai_suggestion_text, years_experience, email, shortlisted=False):
+def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, scores, full_resume_text, detailed_ai_suggestion_text, years_exp, email, shortlisted=False):
     conn = sqlite3.connect(DATABASE_FILE)
     c = conn.cursor()
 
@@ -519,25 +453,25 @@ def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, score
                 length_score = ?,
                 shortlisted = ?,
                 full_resume_text = ?,
-                ai_suggestion = ?,
-                years_experience = ?,
+                detailed_ai_suggestion = ?,
+                years_exp = ?,
                 email = ?
             WHERE id = ?
         ''', (scores['predicted_score'], scores['keyword_match_score'],
               scores['section_completeness_score'], scores['semantic_similarity'],
-              scores['length_score'], shortlisted, full_resume_text, ai_suggestion_text, years_experience, email, existing_id[0]))
+              scores['length_score'], shortlisted, full_resume_text, detailed_ai_suggestion_text, years_exp, email, existing_id[0]))
     else:
         c.execute('''
             INSERT INTO results (
                 job_description_hash, job_description_summary, candidate_name,
                 predicted_score, keyword_match, section_completeness,
-                semantic_similarity, length_score, shortlisted, full_resume_text, ai_suggestion,
-                years_experience, email
+                semantic_similarity, length_score, shortlisted, full_resume_text, detailed_ai_suggestion,
+                years_exp, email
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (jd_hash, jd_summary, candidate_name, scores['predicted_score'],
               scores['keyword_match_score'], scores['section_completeness_score'],
-              scores['semantic_similarity'], scores['length_score'], shortlisted, full_resume_text, ai_suggestion_text,
-              years_experience, email))
+              scores['semantic_similarity'], scores['length_score'], shortlisted, full_resume_text, detailed_ai_suggestion_text,
+              years_exp, email))
     conn.commit()
     conn.close()
 
@@ -556,17 +490,19 @@ def get_screening_results_from_db(jd_hash=None):
     df = pd.DataFrame(results, columns=columns)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     
-    # Rename columns for consistent display in UI (Years Experience, AI Suggestion)
+    # Rename columns from DB names to consistent display names
+    # Use errors='ignore' to prevent KeyError if a column is genuinely missing (e.g., in very old DBs)
     df = df.rename(columns={
-        'years_experience': 'Years Experience',
-        'ai_suggestion': 'AI Suggestion',
-        'predicted_score': 'Score (%)', # Ensure this is also renamed for consistency
-        'keyword_match': 'Keyword Match',
-        'section_completeness': 'Section Completeness',
-        'semantic_similarity': 'Semantic Similarity',
-        'length_score': 'Length Score',
-        'candidate_name': 'Candidate Name' # Ensure this is also renamed
-    })
+        'years_exp': 'Years Experience',             # DB name to Display name
+        'detailed_ai_suggestion': 'AI Suggestion',   # DB name to Display name
+        'predicted_score': 'Score (%)',              # DB name to Display name
+        'keyword_match': 'Keyword Match',            # DB name to Display name
+        'section_completeness': 'Section Completeness', # DB name to Display name
+        'semantic_similarity': 'Semantic Similarity', # DB name to Display name
+        'length_score': 'Length Score',              # DB name to Display name
+        'candidate_name': 'Candidate Name',          # DB name to Display name
+        'email': 'Email'                             # DB name to Display name (capitalized)
+    }, errors='ignore')
     return df
 
 def update_shortlist_status_in_db(jd_hash, candidate_name, is_shortlisted):
@@ -736,8 +672,8 @@ if jd_text and resume_files:
             candidate_name=candidate_name,
             scores=scores,
             full_resume_text=full_resume_text,
-            ai_suggestion_text=ai_suggestion_text,
-            years_experience=scores['years_experience'],
+            detailed_ai_suggestion_text=ai_suggestion_text, # Use detailed_ai_suggestion_text here
+            years_exp=scores['years_experience'], # Use years_exp here
             email=candidate_email,
             shortlisted=False # Default to not shortlisted on initial upload
         )
@@ -749,9 +685,9 @@ if jd_text and resume_files:
             "Section Completeness (%)": scores['section_completeness_score'],
             "Semantic Similarity (%)": scores['semantic_similarity'],
             "Length Score (%)": scores['length_score'],
-            "Years Experience": scores['years_experience'], # Keep as float for sorting
+            "Years Experience": scores['years_experience'], # Keep as float for sorting (display name)
             "Email": candidate_email,
-            "AI Suggestion": ai_suggestion_text,
+            "AI Suggestion": ai_suggestion_text, # This is the display name
             "Full Resume Text": full_resume_text,
             "Shortlisted": False # Initial status
         })
@@ -857,7 +793,7 @@ if not st.session_state.results_df.empty:
                 help="Mark candidate as shortlisted",
                 default=False,
             ),
-            "email": st.column_config.Column(
+            "Email": st.column_config.Column( # This is now Email from DB
                 "Email",
                 help="Candidate's email address.",
                 width="small",
@@ -953,7 +889,7 @@ else:
     past_results_df = get_screening_results_from_db(selected_hash)
 
 if not past_results_df.empty:
-    # Column names are already renamed to 'Years Experience' and 'AI Suggestion' by get_screening_results_from_db
+    # Column names are already renamed by get_screening_results_from_db
     # Ensure numeric types for proper sorting and display
     for col in ['Score (%)', 'Keyword Match', 'Section Completeness', 'Semantic Similarity', 'Length Score', 'Years Experience']:
         if col in past_results_df.columns:
@@ -967,7 +903,7 @@ if not past_results_df.empty:
         past_results_df[[
             'timestamp', 'Candidate Name', 'Score (%)', 'Keyword Match',
             'Section Completeness', 'Semantic Similarity', 'Length Score',
-            'Years Experience', 'email', 'shortlisted', 'AI Suggestion'
+            'Years Experience', 'Email', 'shortlisted', 'AI Suggestion'
         ]],
         column_config={
             "timestamp": "Date",
@@ -981,7 +917,7 @@ if not past_results_df.empty:
                 "Shortlisted?",
                 disabled=True # Disable editing for past results view
             ),
-            "email": "Email", # Display email column
+            "Email": "Email", # Display email column
             "Score (%)": st.column_config.NumberColumn(format="%.1f"),
             "Years Experience": st.column_config.NumberColumn(format="%.1f"),
             "Keyword Match": st.column_config.NumberColumn(format="%.1f"),
