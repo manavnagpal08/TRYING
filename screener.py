@@ -899,6 +899,7 @@ else:
     selected_hash = jd_options_for_history[selected_past_jd]
     past_results_df = get_screening_results_from_db(selected_hash)
 
+# --- IMPORTANT: Add this check here ---
 if not past_results_df.empty:
     # Column names are already renamed by get_screening_results_from_db
     # Ensure numeric types for proper sorting and display
