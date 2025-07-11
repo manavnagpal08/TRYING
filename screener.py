@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import os
 import joblib
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer # Kept for potential future use or if needed for other features, though not directly used in the 770-feature model prediction
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -20,6 +19,7 @@ import matplotlib.pyplot as plt # For word cloud and charts
 from wordcloud import WordCloud # For word cloud
 import urllib.parse # For mailto links
 import nltk # For stopwords
+import os # <--- Ensure this is here!
 
 # --- Database Configuration ---
 DATABASE_FILE = "screening_data.db"
@@ -249,6 +249,40 @@ def get_top_keywords(text, top_n=50):
     all_counts = word_counts + bigram_counts
     return [word for word, count in all_counts.most_common(top_n)]
 
+# --- ADDED: Missing Helper Functions ---
+def extract_sections(text):
+    sections = {}
+    current_section = None
+    lines = text.split('\n')
+
+    for line in lines:
+        match = SECTION_HEADERS_PATTERN.match(line.strip())
+        if match:
+            header = match.group('header').lower()
+            if header in REQUIRED_SECTIONS or header in ["summary", "about", "profile", "contact", "interests", "languages", "references"]:
+                current_section = header
+                sections[current_section] = []
+            elif current_section: # If it's a new header not in our predefined list, but we were in a section
+                sections[current_section].append(line.strip())
+        elif current_section is not None:
+            sections[current_section].append(line.strip())
+
+    # Join the lines within each section
+    for section, content_list in sections.items():
+        sections[section] = "\n".join(content_list).strip()
+    return sections
+
+def calculate_length_score(resume_text):
+    word_count = len(clean_text(resume_text).split())
+    # A simple scoring: optimal length 300-800 words (approx 1-2 pages)
+    if 300 <= word_count <= 800:
+        return 100
+    elif 150 <= word_count < 300 or 800 < word_count <= 1200:
+        return 70
+    else:
+        return 30
+# --- END ADDED FUNCTIONS ---
+
 # --- Feature Calculation for ML Model (770 features) ---
 def create_ml_features(jd_text, resume_text):
     if sentence_model is None:
@@ -377,7 +411,7 @@ def get_screening_features_and_score(job_description, resume_text):
             "length_score": 0.0, "raw_resume_sections": {}
         }
 
-    # --- 1. Create ML Features (770 features) ---
+    # --- 1. Create ML Features (770 features for prediction) ---
     try:
         ml_features = create_ml_features(job_description, resume_text)
     except RuntimeError as e:
@@ -397,7 +431,7 @@ def get_screening_features_and_score(job_description, resume_text):
         predicted_score = 0.0
 
     # --- 3. Calculate Display Features (for UI and AI Suggestion) ---
-    # These are the 4 human-interpretable scores
+    # These are the 4 human-interpretable scores, recalculated from raw texts
     cleaned_jd = clean_text(job_description)
     cleaned_resume = clean_text(resume_text)
 
@@ -408,17 +442,16 @@ def get_screening_features_and_score(job_description, resume_text):
     keyword_match_score_display = (keyword_overlap_count_display / len(jd_keywords_set)) * 100 if len(jd_keywords_set) > 0 else 0.0
 
     # Section Completeness Score (for display)
-    resume_sections = extract_sections(cleaned_resume)
+    resume_sections = extract_sections(cleaned_resume) # This now calls the defined function
     section_completeness_score_display = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
 
-    # Semantic Similarity (for display - re-calculate or extract from ml_features if possible)
-    # For simplicity, let's re-calculate semantic similarity for display
+    # Semantic Similarity (for display - re-calculate using the clean text embeddings)
     jd_embedding_display = sentence_model.encode(cleaned_jd)
     resume_embedding_display = sentence_model.encode(cleaned_resume)
     semantic_similarity_display = cosine_similarity(jd_embedding_display.reshape(1, -1), resume_embedding_display.reshape(1, -1))[0][0] * 100
 
     # Length Score (for display)
-    length_score_display = calculate_length_score(cleaned_resume)
+    length_score_display = calculate_length_score(cleaned_resume) # This now calls the defined function
 
     return {
         "predicted_score": predicted_score,
@@ -499,6 +532,18 @@ def update_shortlist_status_in_db(jd_hash, candidate_name, is_shortlisted):
     ''', (is_shortlisted, jd_hash, candidate_name))
     conn.commit()
     conn.close()
+
+def create_mailto_link(recipient_email, candidate_name, job_title):
+    subject = urllib.parse.quote(f"Interview Invitation - {job_title}")
+    body = urllib.parse.quote(
+        f"Dear {candidate_name},\n\n"
+        "Thank you for your interest in the position of [Job Title]. "
+        "We were very impressed with your application and would like to invite you for an interview to discuss your qualifications further.\n\n"
+        "Please let us know your availability for a brief chat in the coming days.\n\n"
+        "Best regards,\n[Your Name/Hiring Team]"
+    )
+    return f"mailto:{recipient_email}?subject={subject}&body={body}"
+
 
 # --- Email Sending Function ---
 def send_email(recipient_email, subject, body):
@@ -751,7 +796,7 @@ if jd_text and resume_files:
         
         # Display a concise table for shortlisted candidates
         display_shortlisted_summary_cols = [
-            'candidate_name', 'predicted_score', 'years_exp', 'semantic_similarity',
+            'candidate_name', 'predicted_score', 'years_experience', 'semantic_similarity', # Corrected 'years_exp' to 'years_experience' and 'keyword_match' to 'keyword_match_score' to match DB column names or scores dictionary
             'keyword_match', 'ai_suggestion'
         ]
         
@@ -759,9 +804,9 @@ if jd_text and resume_files:
             shortlisted_from_db[display_shortlisted_summary_cols].rename(columns={
                 'candidate_name': 'Candidate Name',
                 'predicted_score': 'Score (%)',
-                'years_exp': 'Years Experience',
-                'semantic_similarity': 'Semantic Similarity (%)', # Renamed for clarity
-                'keyword_match': 'Keyword Match (%)', # Renamed for clarity
+                'years_experience': 'Years Experience', # Corrected column name
+                'semantic_similarity': 'Semantic Similarity (%)',
+                'keyword_match': 'Keyword Match (%)', # Corrected column name
                 'ai_suggestion': 'AI Suggestion'
             }),
             use_container_width=True,
