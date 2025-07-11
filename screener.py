@@ -22,39 +22,59 @@ import os # For os.path.exists, os.listdir
 
 # --- Database Configuration ---
 DATABASE_FILE = "screening_data.db"
+
 @st.cache_resource
 def init_db():
-    conn = sqlite3.connect(DATABASE_FILE)
-    c = conn.cursor()
-    # IMPORTANT: Ensure 'years_experience' and 'email' columns are explicitly added here
-    # and 'ai_suggestion' is present.
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            job_description_hash TEXT,
-            job_description_summary TEXT,
-            candidate_name TEXT,
-            predicted_score REAL,
-            keyword_match REAL,
-            section_completeness REAL,
-            semantic_similarity REAL,
-            length_score REAL,
-            shortlisted BOOLEAN,
-            full_resume_text TEXT,
-            ai_suggestion TEXT, -- This column should already be here
-            years_experience REAL, -- Explicitly added this column
-            email TEXT -- Explicitly added this column
-        )
-    ''')
-    conn.commit()
-    conn.close()
-    return True
+    st.info(f"Attempting to initialize database at: {os.path.abspath(DATABASE_FILE)}")
+    conn = None
+    try:
+        conn = sqlite3.connect(DATABASE_FILE)
+        c = conn.cursor()
+        # IMPORTANT: Ensure 'years_experience', 'email', and 'ai_suggestion' columns are explicitly added here.
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                job_description_hash TEXT,
+                job_description_summary TEXT,
+                candidate_name TEXT,
+                predicted_score REAL,
+                keyword_match REAL,
+                section_completeness REAL,
+                semantic_similarity REAL,
+                length_score REAL,
+                shortlisted BOOLEAN,
+                full_resume_text TEXT,
+                ai_suggestion TEXT,
+                years_experience REAL,
+                email TEXT
+            )
+        ''')
+        conn.commit()
+        st.success("Database 'results' table checked/created successfully.")
+        return True
+    except sqlite3.Error as e:
+        st.error(f"SQLite database initialization error: {e}")
+        return False
+    except Exception as e:
+        st.error(f"General database initialization error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
 
 # Initialize database on app startup
 db_initialized = init_db()
+
+# --- Explicit check for database file existence ---
+if not os.path.exists(DATABASE_FILE):
+    st.error(f"Database file '{DATABASE_FILE}' was NOT found after initialization attempt. This indicates a permission issue or a critical failure during DB creation.")
+    st.stop() # Stop the app if the database file isn't there
+else:
+    st.info(f"Database file '{DATABASE_FILE}' found. Proceeding.")
+
 if not db_initialized:
-    st.error("Failed to initialize database.")
+    st.error("Failed to initialize database. Please check logs for details.")
     st.stop() # Stop app if DB fails to init
 
 # --- Configuration for Feature Extraction (MUST MATCH TRAIN_MODEL.PY) ---
@@ -539,7 +559,13 @@ def get_screening_results_from_db(jd_hash=None):
     # Rename columns for consistent display in UI (Years Experience, AI Suggestion)
     df = df.rename(columns={
         'years_experience': 'Years Experience',
-        'ai_suggestion': 'AI Suggestion'
+        'ai_suggestion': 'AI Suggestion',
+        'predicted_score': 'Score (%)', # Ensure this is also renamed for consistency
+        'keyword_match': 'Keyword Match',
+        'section_completeness': 'Section Completeness',
+        'semantic_similarity': 'Semantic Similarity',
+        'length_score': 'Length Score',
+        'candidate_name': 'Candidate Name' # Ensure this is also renamed
     })
     return df
 
@@ -718,16 +744,15 @@ if jd_text and resume_files:
 
         results_for_current_run.append({
             "Candidate Name": candidate_name,
-            "Score (%)": f"{scores['predicted_score']:.1f}",
-            "Keyword Match (%)": f"{scores['keyword_match_score']:.1f}",
-            "Section Completeness (%)": f"{scores['section_completeness_score']:.1f}",
-            "Semantic Similarity (%)": f"{scores['semantic_similarity']:.1f}",
-            "Length Score (%)": f"{scores['length_score']:.1f}",
-            "Years Experience": f"{scores['years_experience']:.1f}", # Use consistent display name here
+            "Score (%)": scores['predicted_score'], # Keep as float for sorting
+            "Keyword Match (%)": scores['keyword_match_score'],
+            "Section Completeness (%)": scores['section_completeness_score'],
+            "Semantic Similarity (%)": scores['semantic_similarity'],
+            "Length Score (%)": scores['length_score'],
+            "Years Experience": scores['years_experience'], # Keep as float for sorting
             "Email": candidate_email,
             "AI Suggestion": ai_suggestion_text,
             "Full Resume Text": full_resume_text,
-            "Raw Score": scores['predicted_score'], # For internal sorting
             "Shortlisted": False # Initial status
         })
 
@@ -737,15 +762,14 @@ if jd_text and resume_files:
     # --- Process and Display Results ---
     if results_for_current_run: # Check if the list is NOT empty
         df = pd.DataFrame(results_for_current_run)
-        # Convert numeric columns for proper sorting and comparison
+        
+        # Ensure numeric types for proper sorting and comparison
         df['Score (%)'] = pd.to_numeric(df['Score (%)'])
         df['Years Experience'] = pd.to_numeric(df['Years Experience'])
 
-        # Sort by Raw Score for accurate ranking
-        df = df.sort_values(by="Raw Score", ascending=False).reset_index(drop=True)
-        # Drop the 'Raw Score' column before display if you don't want it visible
-        df = df.drop(columns=['Raw Score'])
-
+        # Sort by Score for accurate ranking
+        df = df.sort_values(by="Score (%)", ascending=False).reset_index(drop=True)
+        
         st.session_state.results_df = df # Store the results in session_state
         st.success("All resumes processed and results saved to database.")
 
@@ -776,7 +800,7 @@ st.markdown("---")
 if not st.session_state.results_df.empty:
     st.markdown("## 🥇 Top Candidate AI Recommendation")
     top_candidate = st.session_state.results_df.iloc[0]
-    st.write(f"The **top candidate** for this Job Description is **{top_candidate['Candidate Name']}** with an overall score of **{top_candidate['Score (%)']}%**.")
+    st.write(f"The **top candidate** for this Job Description is **{top_candidate['Candidate Name']}** with an overall score of **{top_candidate['Score (%)']:.1f}%**.")
     st.markdown(f"**AI Recommendation for {top_candidate['Candidate Name']}:**")
     st.info(top_candidate['AI Suggestion'])
 
@@ -790,8 +814,8 @@ if not st.session_state.results_df.empty:
 
     if not shortlisted_candidates_db.empty:
         for idx, row in shortlisted_candidates_db.iterrows():
-            st.write(f"- **{row['candidate_name']}** ({row['Score (%)']}%)")
-            with st.expander(f"AI Suggestion for {row['candidate_name']}"):
+            st.write(f"- **{row['Candidate Name']}** ({row['Score (%)']:.1f}%)")
+            with st.expander(f"AI Suggestion for {row['Candidate Name']}"):
                 st.info(row['AI Suggestion'])
     else:
         st.info("No candidates have been shortlisted yet for the current job description.")
@@ -807,9 +831,6 @@ if not st.session_state.results_df.empty:
     for col in ['Score (%)', 'Keyword Match', 'Section Completeness', 'Semantic Similarity', 'Length Score', 'Years Experience']:
         if col in current_jd_results_from_db.columns: # Check if column exists before converting
             current_jd_results_from_db[col] = pd.to_numeric(current_jd_results_from_db[col], errors='coerce').fillna(0).round(1)
-
-    # Convert boolean to display-friendly string if needed, otherwise keep as bool for checkbox
-    # current_jd_results_from_db['shortlisted_display'] = current_jd_results_from_db['shortlisted'].apply(lambda x: "Yes" if x else "No")
 
     # Add a 'Tag' column for quick categorization based on current run's scores
     current_jd_results_from_db['Tag'] = current_jd_results_from_db.apply(lambda row: "🔥 Top Talent" if row['Score (%)'] > 90 and row['Years Experience'] >= 3 else (
@@ -841,37 +862,37 @@ if not st.session_state.results_df.empty:
                 help="Candidate's email address.",
                 width="small",
             ),
-            "predicted_score": st.column_config.NumberColumn(
+            "Score (%)": st.column_config.NumberColumn(
                 "Score (%)",
                 help="Predicted relevance score.",
                 format="%.1f",
                 width="small",
             ),
-            "years_experience": st.column_config.NumberColumn(
+            "Years Experience": st.column_config.NumberColumn(
                 "Years Experience",
                 help="Extracted years of experience.",
                 format="%.1f",
                 width="small",
             ),
-            "keyword_match": st.column_config.NumberColumn(
+            "Keyword Match": st.column_config.NumberColumn(
                 "Keywords (%)",
                 help="Percentage of JD keywords found in resume.",
                 format="%.1f",
                 width="small",
             ),
-            "section_completeness": st.column_config.NumberColumn(
+            "Section Completeness": st.column_config.NumberColumn(
                 "Sections (%)",
                 help="Completeness of required resume sections.",
                 format="%.1f",
                 width="small",
             ),
-            "semantic_similarity": st.column_config.NumberColumn(
+            "Semantic Similarity": st.column_config.NumberColumn(
                 "Semantic (%)",
                 help="Conceptual similarity between resume and JD.",
                 format="%.1f",
                 width="small",
             ),
-            "length_score": st.column_config.NumberColumn(
+            "Length Score": st.column_config.NumberColumn(
                 "Length (%)",
                 help="Score based on resume length.",
                 format="%.1f",
@@ -882,7 +903,7 @@ if not st.session_state.results_df.empty:
             "job_description_summary": None,
             "timestamp": None
         },
-        order=("candidate_name", "predicted_score", "years_experience", "email", "AI Suggestion", "shortlisted", "keyword_match", "section_completeness", "semantic_similarity", "length_score"),
+        order=("Candidate Name", "Score (%)", "Years Experience", "Email", "AI Suggestion", "shortlisted", "Keyword Match", "Section Completeness", "Semantic Similarity", "Length Score"),
         hide_index=True,
         use_container_width=True,
         num_rows="dynamic",
@@ -894,8 +915,8 @@ if not st.session_state.results_df.empty:
         updated_rows_info = st.session_state.screening_results_table['edited_rows']
         if updated_rows_info:
             for index, updates in updated_rows_info.items():
-                candidate_name = edited_df.loc[index, 'candidate_name'] # Use actual DB column name
-                if 'shortlisted' in updates: # Use actual DB column name
+                candidate_name = edited_df.loc[index, 'Candidate Name'] # Use the renamed column name
+                if 'shortlisted' in updates: # Use the actual DB column name
                     is_shortlisted = updates['shortlisted']
                     update_shortlist_status_in_db(current_jd_hash, candidate_name, is_shortlisted)
                     st.toast(f"Updated {candidate_name} shortlist status to {is_shortlisted}")
@@ -944,13 +965,13 @@ if not past_results_df.empty:
     # Prepare for display, hiding large text fields by default
     st.dataframe(
         past_results_df[[
-            'timestamp', 'candidate_name', 'Score (%)', 'Keyword Match',
+            'timestamp', 'Candidate Name', 'Score (%)', 'Keyword Match',
             'Section Completeness', 'Semantic Similarity', 'Length Score',
             'Years Experience', 'email', 'shortlisted', 'AI Suggestion'
         ]],
         column_config={
             "timestamp": "Date",
-            "candidate_name": "Candidate",
+            "Candidate Name": "Candidate",
             "AI Suggestion": st.column_config.Column(
                 "AI Suggestion",
                 help="AI-generated summary and recommendation.",
