@@ -2,21 +2,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import spacy
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM # NEW: Import for T5 model
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 # --- 1. Load Models and Resources ---
-# Load spaCy model for NLP (ensure 'en_core_web_md' is downloaded: python -m spacy download en_core_web_md)
-try:
-    nlp = spacy.load("en_core_web_md")
-except OSError:
-    st.error("SpaCy model 'en_core_web_md' not found. Please install it by running: python -m spacy download en_core_web_md")
-    st.stop()
-
+# Removed SpaCy import and loading
 # Load the pre-trained ML screening model (RandomForestRegressor)
 try:
     ml_screening_model = joblib.load('ml_screening_model.pkl')
@@ -31,7 +24,7 @@ except Exception as e:
     st.error(f"Error loading SentenceTransformer model: {e}")
     st.stop()
 
-# --- NEW: Load the Fine-tuned T5 Model from Hugging Face Hub ---
+# --- Load the Fine-tuned T5 Model from Hugging Face Hub ---
 T5_REPO_ID = "mnagpal/fine-tuned-t5-resume-screener"
 try:
     t5_tokenizer = AutoTokenizer.from_pretrained(T5_REPO_ID)
@@ -61,6 +54,7 @@ tfidf_vectorizer = None
 # --- Helper Functions ---
 
 def clean_text(text):
+    # This function does not use SpaCy and relies on regex/string methods.
     text = text.lower()
     text = re.sub(r'[^a-z0-9\s]', '', text) # Remove punctuation and special characters
     text = re.sub(r'\s+', ' ', text).strip() # Replace multiple spaces with a single space
@@ -118,7 +112,7 @@ def calculate_length_score(resume_text):
     if word_count < 1200: return 0.7
     return 0.3
 
-# --- NEW: T5 Summarization Function ---
+# --- T5 Summarization Function ---
 def generate_summary_with_t5(text, max_length=150):
     if not t5_model or not t5_tokenizer:
         return "T5 model not loaded."
@@ -191,19 +185,11 @@ with col1:
             job_description_text = job_description_file.read().decode("utf-8")
         elif job_description_file.type == "application/pdf":
             st.warning("PDF parsing is not fully implemented in this example. Please copy-paste text from PDF.")
-            # Basic attempt, might require 'PyPDF2' or 'pdfminer.six'
-            # try:
-            #     from PyPDF2 import PdfReader
-            #     reader = PdfReader(job_description_file)
-            #     for page in reader.pages:
-            #         job_description_text += page.extract_text() or ""
-            # except Exception as e:
-            #     st.error(f"Could not read PDF: {e}")
         st.text_area("Or paste Job Description here:", value=job_description_text, height=300, key="jd_upload_text_area")
     else:
         job_description_text = st.text_area("Paste Job Description here:", height=300, key="jd_text_area")
 
-    # NEW: Display T5 Summary for Job Description
+    # Display T5 Summary for Job Description
     if job_description_text and t5_model:
         with st.expander("T5 Job Description Summary"):
             jd_summary = generate_summary_with_t5(job_description_text)
@@ -227,20 +213,12 @@ if job_description_text and resume_files:
             resume_text = resume_file.read().decode("utf-8")
         elif resume_file.type == "application/pdf":
             st.warning(f"PDF parsing for {resume_file.name} is not fully implemented in this example. Please copy-paste text.")
-            # Basic attempt, might require 'PyPDF2' or 'pdfminer.six'
-            # try:
-            #     from PyPDF2 import PdfReader
-            #     reader = PdfReader(resume_file)
-            #     for page in reader.pages:
-            #         resume_text += page.extract_text() or ""
-            # except Exception as e:
-            #     st.error(f"Could not read PDF {resume_file.name}: {e}")
         
         if not resume_text.strip():
             st.info("No content extracted/pasted for this resume. Skipping analysis.")
             continue
         
-        # NEW: Display T5 Summary for Resume
+        # Display T5 Summary for Resume
         if t5_model:
             with st.expander(f"T5 Summary for {resume_file.name}"):
                 resume_summary = generate_summary_with_t5(resume_text)
