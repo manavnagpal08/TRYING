@@ -26,6 +26,7 @@ DATABASE_FILE = "screening_data.db"
 def init_db():
     conn = sqlite3.connect(DATABASE_FILE)
     c = conn.cursor()
+    # IMPORTANT: Ensure 'years_experience' and 'email' columns are explicitly added here
     c.execute('''
         CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +41,9 @@ def init_db():
             length_score REAL,
             shortlisted BOOLEAN,
             full_resume_text TEXT,
-            ai_suggestion TEXT
+            ai_suggestion TEXT,
+            years_experience REAL, -- Explicitly added this column
+            email TEXT -- Explicitly added this column
         )
     ''')
     conn.commit()
@@ -141,7 +144,7 @@ def load_ml_models():
         st.success("SentenceTransformer model loaded successfully!")
     except Exception as e:
         st.error(f"Error loading SentenceTransformer model: {e}")
-        
+
     return ml_model, sentence_transformer_model
 
 @st.cache_resource
@@ -357,9 +360,9 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
         strengths.append("Their profile demonstrates an **outstanding conceptual and practical alignment** with the job description.")
         strengths.append(f"They possess **extensive relevant experience** ({years_exp:.1f} years), aligning perfectly with the role's demands.")
         if keyword_match_score >= HIGH_KEYWORD:
-             strengths.append("Their resume contains **all key industry terms and required skills**, indicating direct relevance.")
+            strengths.append("Their resume contains **all key industry terms and required skills**, indicating direct relevance.")
         else:
-             strengths.append("While some specific keywords might not be explicit, their overall profile shows strong conceptual relevance.")
+            strengths.append("While some specific keywords might not be explicit, their overall profile shows strong conceptual relevance.")
 
     elif score >= MODERATE_FIT_SCORE and years_exp >= MODERATE_EXP and semantic_similarity >= MODERATE_SEMANTIC:
         overall_fit_phrase = "Good Fit"
@@ -369,7 +372,7 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
             strengths.append(f"They bring **solid experience** ({years_exp:.1f} years) to the table.")
         else:
             gaps.append(f"Experience ({years_exp:.1f} years) is slightly below the ideal, suggesting a need to probe depth in specific areas.")
-        
+
         if semantic_similarity >= HIGH_SEMANTIC:
             strengths.append("Their understanding of the domain and role responsibilities appears strong.")
         else:
@@ -384,13 +387,13 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
         overall_fit_phrase = "Lower Fit"
         recommendation_phrase = "Consider for Further Review / Likely Decline"
         gaps.append("Their overall profile indicates **significant discrepancies** with the job requirements, suggesting a lower overall fit.")
-        
+
         if years_exp < MODERATE_EXP:
             gaps.append(f"Experience ({years_exp:.1f} years) is notably limited for this role.")
-        
+
         if semantic_similarity < MODERATE_SEMANTIC:
             gaps.append("A **conceptual gap** exists between their profile and the job description, implying a potential mismatch in understanding or approach.")
-        
+
         if keyword_match_score < MODERATE_KEYWORD:
             gaps.append("Many **critical keywords and required skills appear to be missing** from their resume.")
 
@@ -474,10 +477,10 @@ def get_screening_features_and_score(job_description, resume_text):
 def get_jd_hash(jd_text):
     return hashlib.md5(jd_text.encode('utf-8')).hexdigest()
 
-def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, scores, full_resume_text, ai_suggestion_text, shortlisted=False):
+def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, scores, full_resume_text, ai_suggestion_text, years_experience, email, shortlisted=False):
     conn = sqlite3.connect(DATABASE_FILE)
     c = conn.cursor()
-    
+
     c.execute('''
         SELECT id FROM results 
         WHERE job_description_hash = ? AND candidate_name = ?
@@ -495,21 +498,25 @@ def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, score
                 length_score = ?,
                 shortlisted = ?,
                 full_resume_text = ?,
-                ai_suggestion = ?
+                ai_suggestion = ?,
+                years_experience = ?,
+                email = ?
             WHERE id = ?
         ''', (scores['predicted_score'], scores['keyword_match_score'], 
               scores['section_completeness_score'], scores['semantic_similarity'], 
-              scores['length_score'], shortlisted, full_resume_text, ai_suggestion_text, existing_id[0]))
+              scores['length_score'], shortlisted, full_resume_text, ai_suggestion_text, years_experience, email, existing_id[0]))
     else:
         c.execute('''
             INSERT INTO results (
                 job_description_hash, job_description_summary, candidate_name, 
                 predicted_score, keyword_match, section_completeness, 
-                semantic_similarity, length_score, shortlisted, full_resume_text, ai_suggestion
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                semantic_similarity, length_score, shortlisted, full_resume_text, ai_suggestion,
+                years_experience, email
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (jd_hash, jd_summary, candidate_name, scores['predicted_score'], 
               scores['keyword_match_score'], scores['section_completeness_score'], 
-              scores['semantic_similarity'], scores['length_score'], shortlisted, full_resume_text, ai_suggestion_text))
+              scores['semantic_similarity'], scores['length_score'], shortlisted, full_resume_text, ai_suggestion_text,
+              years_experience, email))
     conn.commit()
     conn.close()
 
@@ -520,17 +527,17 @@ def get_screening_results_from_db(jd_hash=None):
         c.execute('SELECT * FROM results WHERE job_description_hash = ? ORDER BY predicted_score DESC', (jd_hash,))
     else:
         c.execute('SELECT * FROM results ORDER BY predicted_score DESC')
-    
+
     columns = [description[0] for description in c.description]
     results = c.fetchall()
     conn.close()
-    
+
     df = pd.DataFrame(results, columns=columns)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     return df
 
 def update_shortlist_status_in_db(jd_hash, candidate_name, is_shortlisted):
-    conn = sqlite3.connect(DATABASE_FILE)
+    conn = sqlite3.connect(DATABASE_FILE) # Corrected this line
     c = conn.cursor()
     c.execute('''
         UPDATE results SET shortlisted = ?
@@ -560,7 +567,7 @@ def send_email(recipient_email, subject, body):
     except KeyError:
         st.error("Email credentials not found in Streamlit Secrets. Please configure them in .streamlit/secrets.toml.")
         return False
-    
+
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
@@ -597,7 +604,7 @@ with col1:
                 job_roles[fname.replace(".txt", "").replace("_", " ").title()] = os.path.join("data", fname)
 
     jd_option = st.selectbox("📌 **Select a Pre-Loaded Job Role or Upload Your Own Job Description**", list(job_roles.keys()))
-    
+
     if jd_option == "Upload my own":
         jd_file = st.file_uploader("Upload Job Description (TXT)", type="txt", help="Upload a .txt file containing the job description.")
         if jd_file:
@@ -615,7 +622,7 @@ with col1:
                 st.text_area("Job Description Content", jd_text, height=200, disabled=True, label_visibility="collapsed")
         else:
             st.warning(f"File not found for pre-loaded JD: {jd_option}. Please ensure it exists in the 'data' folder.")
-    
+
     # Existing expander for uploaded JD (if user chose to upload and text is there)
     if jd_option == "Upload my own" and jd_file and jd_text:
         with st.expander("📝 View Uploaded Job Description"):
@@ -626,7 +633,7 @@ with col1:
         with st.expander("T5 Job Description Summary"):
             jd_summary_text = generate_summary_with_t5(jd_text)
             st.write(jd_summary_text)
-    
+
     current_jd_hash = get_jd_hash(jd_text) if jd_text else None
 
 with col2:
@@ -716,9 +723,11 @@ if jd_text and resume_files:
             },
             full_resume_text=text,
             ai_suggestion_text=ai_suggestion_text,
+            years_experience=years_experience_display,
+            email=email,
             shortlisted=False # Default to not shortlisted on initial upload
         )
-        
+
         results_for_current_run.append({
             "File Name": file.name,
             "Candidate Name": candidate_name,
@@ -732,13 +741,13 @@ if jd_text and resume_files:
             "Keyword Match Score": keyword_match_score_display,
             "Resume Raw Text": text # Stored for detailed view/email
         })
-    
+
     progress_bar.empty()
     status_text.empty()
 
     # Update the DataFrame for current session display
     df = pd.DataFrame(results_for_current_run).sort_values(by="Score (%)", ascending=False).reset_index(drop=True)
-    
+
     st.success("All resumes processed and results saved to database.")
 
     # --- Overall Candidate Comparison Chart ---
@@ -768,13 +777,13 @@ if jd_text and resume_files:
     # --- TOP CANDIDATE AI RECOMMENDATION ---
     st.markdown("## 👑 Top Candidate AI Recommendation")
     st.caption("A concise, AI-powered assessment for the most suitable candidate.")
-    
+
     if not df.empty:
         top_candidate = df.iloc[0]
         st.markdown(f"### **{top_candidate['Candidate Name']}**")
         st.markdown(f"**Score:** {top_candidate['Score (%)']:.2f}% | **Experience:** {top_candidate['Years Experience']:.1f} years | **Semantic Similarity:** {top_candidate['Semantic Similarity']:.2f}% | **Keyword Match:** {top_candidate['Keyword Match Score']:.2f}%")
         st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}")
-        
+
         if top_candidate['Email'] != "Not Found":
             mailto_link_top = create_mailto_link(
                 recipient_email=top_candidate['Email'],
@@ -784,7 +793,7 @@ if jd_text and resume_files:
             st.markdown(f'<a href="{mailto_link_top}" target="_blank"><button style="background-color:#00cec9;color:white;border:none;padding:10px 20px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;border-radius:8px;">📧 Invite Top Candidate for Interview</button></a>', unsafe_allow_html=True)
         else:
             st.info(f"Email address not found for {top_candidate['Candidate Name']}. Cannot send automated invitation.")
-        
+
         st.markdown("---")
         st.info("For detailed analytics, matched keywords, and missing skills for ALL candidates, please navigate to the **Analytics Dashboard**.")
 
@@ -794,18 +803,19 @@ if jd_text and resume_files:
 
     # --- Shortlisted Candidates Section (from DB, for current JD) ---
     st.markdown("## 🌟 Your Shortlisted Candidates (for this Job Description)")
-    shortlisted_from_db = get_screening_results_from_db(jd_hash=current_jd_hash)
-    shortlisted_from_db = shortlisted_from_db[shortlisted_from_db['shortlisted'] == True]
+    # Fetch all candidates for the current JD from DB, then filter by shortlisted status
+    all_candidates_for_jd = get_screening_results_from_db(jd_hash=current_jd_hash)
+    shortlisted_from_db = all_candidates_for_jd[all_candidates_for_jd['shortlisted'] == True]
 
     if not shortlisted_from_db.empty:
         st.success(f"**{len(shortlisted_from_db)}** candidate(s) are currently shortlisted for this job description.")
-        
+
         # Display a concise table for shortlisted candidates
         display_shortlisted_summary_cols = [
             'candidate_name', 'predicted_score', 'years_experience', 'semantic_similarity',
-            'keyword_match', 'ai_suggestion'
+            'keyword_match', 'ai_suggestion', 'email'
         ]
-        
+
         st.dataframe(
             shortlisted_from_db[display_shortlisted_summary_cols].rename(columns={
                 'candidate_name': 'Candidate Name',
@@ -813,7 +823,8 @@ if jd_text and resume_files:
                 'years_experience': 'Years Experience',
                 'semantic_similarity': 'Semantic Similarity (%)',
                 'keyword_match': 'Keyword Match (%)',
-                'ai_suggestion': 'AI Suggestion'
+                'ai_suggestion': 'AI Suggestion',
+                'email': 'Email'
             }),
             use_container_width=True,
             hide_index=True,
@@ -822,33 +833,35 @@ if jd_text and resume_files:
                 "Years Experience": st.column_config.NumberColumn("Years Experience", format="%.1f years"),
                 "Semantic Similarity (%)": st.column_config.NumberColumn("Semantic Similarity (%)", format="%.2f"),
                 "Keyword Match (%)": st.column_config.NumberColumn("Keyword Match (%)", format="%.2f"),
-                "AI Suggestion": st.column_config.Column("AI Suggestion", help="AI's concise overall assessment and recommendation", width="large")
+                "AI Suggestion": st.column_config.Column("AI Suggestion", help="AI's concise overall assessment and recommendation", width="large"),
+                "Email": st.column_config.Column("Email", help="Candidate's email address")
             }
         )
-        
+
         # Email functionality for shortlisted candidates
         st.markdown("---")
         st.subheader("✉️ Send Email to Shortlisted Candidates")
-        recipient_emails_input = st.text_input("Enter recipient email(s) (comma-separated):", key="recipient_emails")
-        email_subject = st.text_input("Email Subject:", value=f"Job Application Update: {jd_option if jd_option != 'Upload my own' else 'Your Application'}", key="email_subject")
-        email_body = st.text_area("Email Body:", height=200, key="email_body",
+        recipient_emails_input = st.text_input("Enter recipient email(s) (comma-separated):", key="recipient_emails_shortlist", value=", ".join(shortlisted_from_db['email'].tolist()))
+        email_subject = st.text_input("Email Subject:", value=f"Job Application Update: {jd_option if jd_option != 'Upload my own' else 'Your Application'}", key="email_subject_shortlist")
+        email_body = st.text_area("Email Body:", height=200, key="email_body_shortlist",
             value="Dear candidate,\n\nThank you for your application. We are pleased to inform you that you have been shortlisted for further consideration.\n\nBest regards,\n[Your Company Name]"
         )
-        
-        if st.button("Send Emails to Shortlisted Candidates"):
+
+        if st.button("Send Emails to Shortlisted Candidates (from this JD)"):
             if not recipient_emails_input:
                 st.error("Please enter at least one recipient email address.")
             else:
                 recipient_list = [e.strip() for e in recipient_emails_input.split(',')]
                 all_sent = True
-                for email in recipient_list:
-                    if send_email(email, email_subject, email_body):
-                        st.success(f"Email sent successfully to {email}!")
+                for email_addr in recipient_list:
+                    if send_email(email_addr, email_subject, email_body):
+                        st.success(f"Email sent successfully to {email_addr}!")
                     else:
                         all_sent = False
-                        st.error(f"Failed to send email to {email}.")
+                        st.error(f"Failed to send email to {email_addr}.")
                 if all_sent:
                     st.success("All emails sent!")
+
     else:
         st.info("No candidates have been shortlisted yet for this job description.")
 
@@ -856,31 +869,58 @@ if jd_text and resume_files:
 
     # --- Comprehensive Candidate Results Table (All processed candidates for current JD) ---
     st.markdown("## 📋 Comprehensive Candidate Results Table")
-    st.caption("Full details for all processed resumes for this job description.")
-    
+    st.caption("Full details for all processed resumes for this job description. Use the checkboxes to shortlist candidates.")
+
     if not df.empty:
         # Add a 'Tag' column for quick categorization based on current run's scores
         df['Tag'] = df.apply(lambda row: "🔥 Top Talent" if row['Score (%)'] > 90 and row['Years Experience'] >= 3 else (
             "✅ Good Fit" if row['Score (%)'] >= 75 else "⚠️ Needs Review"), axis=1)
 
-        st.dataframe(
-            df[[
-                "Candidate Name", "Score (%)", "Years Experience", "Email",
-                "AI Suggestion", "Semantic Similarity", "Keyword Match Score", "Matched Keywords", "Missing Skills", "Tag"
-            ]],
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Score (%)": st.column_config.ProgressColumn("Score (%)", format="%.2f", min_value=0, max_value=100),
-                "Years Experience": st.column_config.NumberColumn("Years Experience", format="%.1f years"),
-                "Semantic Similarity": st.column_config.NumberColumn("Semantic Similarity", format="%.2f"),
-                "Keyword Match Score": st.column_config.NumberColumn("Keyword Match Score", format="%.2f"),
-                "AI Suggestion": st.column_config.Column("AI Suggestion", help="AI's concise overall assessment and recommendation", width="large"),
-                "Matched Keywords": st.column_config.Column("Matched Keywords", help="Keywords from JD found in resume", width="large"),
-                "Missing Skills": st.column_config.Column("Missing Skills", help="Keywords from JD NOT found in resume", width="large"),
-                "Tag": st.column_config.Column("Tag", help="Quick categorization of candidate fit")
-            }
-        )
+        # Merge with DB shortlist status to show current state
+        db_results_for_merge = get_screening_results_from_db(jd_hash=current_jd_hash)[['candidate_name', 'shortlisted']]
+        df_display = df.merge(db_results_for_merge, on='candidate_name', how='left')
+        df_display['shortlisted'] = df_display['shortlisted'].fillna(False)
+
+        st.markdown("---")
+        st.subheader("Mark Candidates for Shortlist")
+        st.write("Check the box next to a candidate to mark them as 'shortlisted' in the database.")
+
+        # Display using st.columns for interactive checkboxes
+        # Define columns for display in the interactive section
+        display_cols_interactive = ["Candidate Name", "Score (%)", "Years Experience", "Email", "AI Suggestion", "Shortlist"]
+
+        # Create header row for interactive table
+        header_cols = st.columns([1.5, 0.8, 0.8, 1.5, 3, 0.5]) # Adjusted widths for better fit
+        with header_cols[0]: st.markdown("**Candidate Name**")
+        with header_cols[1]: st.markdown("**Score (%)**")
+        with header_cols[2]: st.markdown("**Exp (Yrs)**")
+        with header_cols[3]: st.markdown("**Email**")
+        with header_cols[4]: st.markdown("**AI Suggestion**")
+        with header_cols[5]: st.markdown("**Shortlist**")
+
+        st.markdown("---") # Separator for header
+
+        for i, row_data in df_display.iterrows():
+            col_name, col_score, col_exp, col_email, col_ai, col_shortlist = st.columns([1.5, 0.8, 0.8, 1.5, 3, 0.5])
+
+            with col_name: st.write(row_data['Candidate Name'])
+            with col_score: st.write(f"{row_data['Score (%)']:.2f}%")
+            with col_exp: st.write(f"{row_data['Years Experience']:.1f}")
+            with col_email: st.write(row_data['Email'])
+            with col_ai: st.write(row_data['AI Suggestion'])
+
+            with col_shortlist:
+                current_shortlisted_status = bool(row_data['shortlisted'])
+                new_shortlisted_status = st.checkbox(
+                    "", # No label for cleaner look
+                    value=current_shortlisted_status,
+                    key=f"shortlist_checkbox_{row_data['Candidate Name']}_{i}" # Unique key
+                )
+                if new_shortlisted_status != current_shortlisted_status:
+                    update_shortlist_status_in_db(current_jd_hash, row_data['Candidate Name'], new_shortlisted_status)
+                    st.success(f"Updated shortlist status for {row_data['Candidate Name']} to {new_shortlisted_status}")
+                    st.rerun() # Rerun to reflect changes in the UI and shortlisted section
+
     else:
         st.info("No candidates processed for this job description yet.")
 
