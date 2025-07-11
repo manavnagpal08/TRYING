@@ -311,37 +311,72 @@ def calculate_length_score(resume_text):
     else:
         return 30
 
+print("DEBUG: Defining get_screening_features_and_score...")
 # --- Feature Calculation for ML Model (772 features) ---
-def create_ml_features(jd_text, resume_text):
-    if sentence_model is None:
-        raise RuntimeError("SentenceTransformer model is not loaded. Cannot create ML features.")
+def get_screening_features_and_score(job_description, resume_text):
+    """
+    Calculates features, predicts score using ML model, and prepares display scores.
+    """
+    if ml_screening_model is None or sentence_model is None:
+        st.error("ML models not loaded. Cannot predict score.")
+        return {
+            "predicted_score": 0.0, "keyword_match_score": 0.0,
+            "section_completeness_score": 0.0, "semantic_similarity": 0.0,
+            "length_score": 0.0, "raw_resume_sections": {}, "years_experience": 0.0
+        }
 
-    cleaned_jd = clean_text(jd_text)
+    # --- 1. Create ML Features (772 features for prediction) ---
+    try:
+        ml_features = create_ml_features(job_description, resume_text)
+    except RuntimeError as e:
+        st.error(f"Error creating ML features: {e}")
+        return {
+            "predicted_score": 0.0, "keyword_match_score": 0.0,
+            "section_completeness_score": 0.0, "semantic_similarity": 0.0,
+            "length_score": 0.0, "raw_resume_sections": {}, "years_experience": 0.0
+        }
+
+    # --- 2. Predict Score using ML Model ---
+    try:
+        predicted_score = ml_screening_model.predict(ml_features)[0]
+        predicted_score = max(0.0, min(100.0, predicted_score)) # Clamp score to 0-100
+    except Exception as e:
+        st.error(f"Error predicting score with ML model: {e}")
+        predicted_score = 0.0
+
+    # --- 3. Calculate Display Features (for UI and AI Suggestion) ---
+    # These are the 4 human-interpretable scores, recalculated from raw texts
+    cleaned_jd = clean_text(job_description)
     cleaned_resume = clean_text(resume_text)
 
-    jd_embedding = sentence_model.encode(cleaned_jd)
-    resume_embedding = sentence_model.encode(cleaned_resume)
+    # Keyword Match Score (for display)
+    jd_keywords_set = set(get_top_keywords(cleaned_jd))
+    resume_words_set = {word for word in re.findall(r'\b\w+\b', cleaned_resume) if word not in ALL_STOP_WORDS} # Ensure resume_words_set is defined
+    keyword_overlap_count_display = len(jd_keywords_set.intersection(resume_words_set))
+    keyword_match_score_display = (keyword_overlap_count_display / len(jd_keywords_set)) * 100 if len(jd_keywords_set) > 0 else 0.0
 
-    experience = extract_years_of_experience(resume_text)
-
-    jd_keywords = set(get_top_keywords(cleaned_jd))
-    resume_keywords = set(get_top_keywords(cleaned_resume))
-    keyword_overlap_count = len(jd_keywords.intersection(resume_keywords))
-
-    # NEW FEATURES: section completeness and length score
+    # Section Completeness Score (for display)
     resume_sections = extract_sections(cleaned_resume)
-    section_completeness_score = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
-    length_score = calculate_length_score(cleaned_resume)
+    section_completeness_score_display = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
 
-    features = np.concatenate([
-        jd_embedding.astype(float),
-        resume_embedding.astype(float),
-        np.array([float(experience)]),
-        np.array([float(keyword_overlap_count)]),
-        np.array([float(section_completeness_score)]), # New feature
-        np.array([float(length_score)]) # New feature
-    ])
-    return features.reshape(1, -1)
+    # Semantic Similarity (for display - re-calculate using the clean text embeddings)
+    jd_embedding_display = sentence_model.encode(cleaned_jd)
+    resume_embedding_display = sentence_model.encode(cleaned_resume)
+    semantic_similarity_display = cosine_similarity(jd_embedding_display.reshape(1, -1), resume_embedding_display.reshape(1, -1))[0][0] * 100
+
+    # Length Score (for display)
+    length_score_display = calculate_length_score(cleaned_resume)
+
+    return {
+        "predicted_score": predicted_score,
+        "keyword_match_score": keyword_match_score_display,
+        "section_completeness_score": section_completeness_score_display,
+        "semantic_similarity": semantic_similarity_display,
+        "length_score": length_score_display,
+        "raw_resume_sections": resume_sections,
+        "years_experience": extract_years_of_experience(resume_text) # Also return years_exp for AI suggestion
+    }
+print("DEBUG: get_screening_features_and_score defined.")
 
 
 # --- T5 Summarization Function ---
@@ -497,7 +532,7 @@ def get_screening_results_from_db(jd_hash=None):
 
     df = pd.DataFrame(results, columns=columns)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
-    
+
     # Rename columns from DB names to consistent display names
     # Use errors='ignore' to prevent KeyError if a column is genuinely missing (e.g., in very old DBs)
     df = df.rename(columns={
@@ -662,6 +697,7 @@ if jd_text and resume_files:
         candidate_name = extract_name(full_resume_text) or file.name.replace(".pdf", "")
         candidate_email = extract_email(full_resume_text) or "N/A"
 
+        # This is the line that was causing the NameError if the function wasn't parsed
         scores = get_screening_features_and_score(jd_text, full_resume_text)
 
         # Generate AI Suggestion based on all calculated scores
@@ -708,14 +744,14 @@ if jd_text and resume_files:
     # --- Process and Display Results ---
     if results_for_current_run: # Check if the list is NOT empty
         df = pd.DataFrame(results_for_current_run)
-        
+
         # Ensure numeric types for proper sorting and comparison
         df['Score (%)'] = pd.to_numeric(df['Score (%)'])
         df['Years Experience'] = pd.to_numeric(df['Years Experience'])
 
         # Sort by Score for accurate ranking
         df = df.sort_values(by="Score (%)", ascending=False).reset_index(drop=True)
-        
+
         st.session_state.results_df = df # Store the results in session_state
         st.success("All resumes processed and results saved to database.")
 
@@ -899,7 +935,7 @@ else:
     selected_hash = jd_options_for_history[selected_past_jd]
     past_results_df = get_screening_results_from_db(selected_hash)
 
-# --- IMPORTANT: Add this check here ---
+# --- IMPORTANT: Add this check here to prevent KeyError on empty DataFrame ---
 if not past_results_df.empty:
     # Column names are already renamed by get_screening_results_from_db
     # Ensure numeric types for proper sorting and display
