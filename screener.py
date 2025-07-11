@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import re
 import joblib
-from sklearn.feature_extraction.text import TfidfVectorizer # Kept for potential future use or if needed for other features, though not directly used in the 770-feature model prediction
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -19,7 +18,7 @@ import matplotlib.pyplot as plt # For word cloud and charts
 from wordcloud import WordCloud # For word cloud
 import urllib.parse # For mailto links
 import nltk # For stopwords
-import os # <--- Ensure this is here!
+import os # For os.path.exists, os.listdir
 
 # --- Database Configuration ---
 DATABASE_FILE = "screening_data.db"
@@ -115,6 +114,7 @@ CUSTOM_STOP_WORDS = set([
 ])
 ALL_STOP_WORDS = NLTK_STOP_WORDS.union(CUSTOM_STOP_WORDS)
 
+# --- REQUIRED SECTIONS and PATTERN (MUST MATCH train_model.py) ---
 REQUIRED_SECTIONS = [
     "experience", "education", "skills", "projects", "certifications",
     "awards", "publications", "extracurricular activities", "volunteer experience"
@@ -249,7 +249,6 @@ def get_top_keywords(text, top_n=50):
     all_counts = word_counts + bigram_counts
     return [word for word, count in all_counts.most_common(top_n)]
 
-# --- ADDED: Missing Helper Functions ---
 def extract_sections(text):
     sections = {}
     current_section = None
@@ -262,48 +261,55 @@ def extract_sections(text):
             if header in REQUIRED_SECTIONS or header in ["summary", "about", "profile", "contact", "interests", "languages", "references"]:
                 current_section = header
                 sections[current_section] = []
-            elif current_section: # If it's a new header not in our predefined list, but we were in a section
+            elif current_section:
                 sections[current_section].append(line.strip())
         elif current_section is not None:
             sections[current_section].append(line.strip())
 
-    # Join the lines within each section
     for section, content_list in sections.items():
         sections[section] = "\n".join(content_list).strip()
     return sections
 
 def calculate_length_score(resume_text):
     word_count = len(clean_text(resume_text).split())
-    # A simple scoring: optimal length 300-800 words (approx 1-2 pages)
     if 300 <= word_count <= 800:
         return 100
     elif 150 <= word_count < 300 or 800 < word_count <= 1200:
         return 70
     else:
         return 30
-# --- END ADDED FUNCTIONS ---
 
-# --- Feature Calculation for ML Model (770 features) ---
+# --- Feature Calculation for ML Model (772 features) ---
 def create_ml_features(jd_text, resume_text):
     if sentence_model is None:
         raise RuntimeError("SentenceTransformer model is not loaded. Cannot create ML features.")
 
-    jd_embedding = sentence_model.encode(clean_text(jd_text))
-    resume_embedding = sentence_model.encode(clean_text(resume_text))
+    cleaned_jd = clean_text(jd_text)
+    cleaned_resume = clean_text(resume_text)
+
+    jd_embedding = sentence_model.encode(cleaned_jd)
+    resume_embedding = sentence_model.encode(cleaned_resume)
 
     experience = extract_years_of_experience(resume_text)
 
-    jd_keywords = set(get_top_keywords(jd_text))
-    resume_keywords = set(get_top_keywords(resume_text))
+    jd_keywords = set(get_top_keywords(cleaned_jd))
+    resume_keywords = set(get_top_keywords(cleaned_resume))
     keyword_overlap_count = len(jd_keywords.intersection(resume_keywords))
 
+    # NEW FEATURES: section completeness and length score
+    resume_sections = extract_sections(cleaned_resume)
+    section_completeness_score = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
+    length_score = calculate_length_score(cleaned_resume)
+
     features = np.concatenate([
-        jd_embedding,
-        resume_embedding,
-        np.array([experience]),
-        np.array([keyword_overlap_count])
+        jd_embedding.astype(float),
+        resume_embedding.astype(float),
+        np.array([float(experience)]),
+        np.array([float(keyword_overlap_count)]),
+        np.array([float(section_completeness_score)]), # New feature
+        np.array([float(length_score)]) # New feature
     ])
-    return features.reshape(1, -1) # Reshape for single prediction
+    return features.reshape(1, -1)
 
 
 # --- T5 Summarization Function ---
@@ -326,8 +332,8 @@ def generate_summary_with_t5(text, max_length=150):
 @st.cache_data(show_spinner="Generating AI Suggestion...")
 def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, keyword_match_score, jd_text, resume_text):
     """
-    Generates a concise and more realistic AI suggestion based on rules and scores.
-    This function can be further enhanced by using the T5 model for more dynamic text generation.
+    Generates a concise and more realistic AI suggestion based on rules and scores,
+    with less explicit numerical score mentions in the narrative.
     """
     overall_fit_phrase = ""
     recommendation_phrase = ""
@@ -367,26 +373,26 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
         if semantic_similarity >= HIGH_SEMANTIC:
             strengths.append("Their understanding of the domain and role responsibilities appears strong.")
         else:
-            gaps.append(f"Semantic alignment ({semantic_similarity:.2f}) is fair; consider probing their approach to complex scenarios outlined in the JD.")
+            gaps.append("Their conceptual alignment with the role is fair; consider probing their approach to complex scenarios outlined in the JD.")
 
         if keyword_match_score >= MODERATE_KEYWORD:
             strengths.append("Many core skills and technologies mentioned in the JD are present in their resume.")
         else:
-            gaps.append(f"Key skill mentions could be more prominent; verify specific technical proficiencies during interview.")
+            gaps.append("Key skill mentions could be more prominent; verify specific technical proficiencies during interview.")
 
     else:
         overall_fit_phrase = "Lower Fit"
         recommendation_phrase = "Consider for Further Review / Likely Decline"
-        gaps.append(f"Their overall fit score ({score:.2f}%) indicates **significant discrepancies** with the job requirements.")
+        gaps.append("Their overall profile indicates **significant discrepancies** with the job requirements, suggesting a lower overall fit.")
         
         if years_exp < MODERATE_EXP:
             gaps.append(f"Experience ({years_exp:.1f} years) is notably limited for this role.")
         
         if semantic_similarity < MODERATE_SEMANTIC:
-            gaps.append(f"A **conceptual gap** exists between their profile and the job description, implying a potential mismatch in understanding or approach.")
+            gaps.append("A **conceptual gap** exists between their profile and the job description, implying a potential mismatch in understanding or approach.")
         
         if keyword_match_score < MODERATE_KEYWORD:
-            gaps.append(f"Many **critical keywords and required skills appear to be missing** from their resume.")
+            gaps.append("Many **critical keywords and required skills appear to be missing** from their resume.")
 
     summary_parts = [f"**Overall Fit:** {overall_fit_phrase}."]
     if strengths:
@@ -408,10 +414,10 @@ def get_screening_features_and_score(job_description, resume_text):
         return {
             "predicted_score": 0.0, "keyword_match_score": 0.0,
             "section_completeness_score": 0.0, "semantic_similarity": 0.0,
-            "length_score": 0.0, "raw_resume_sections": {}
+            "length_score": 0.0, "raw_resume_sections": {}, "years_experience": 0.0
         }
 
-    # --- 1. Create ML Features (770 features for prediction) ---
+    # --- 1. Create ML Features (772 features for prediction) ---
     try:
         ml_features = create_ml_features(job_description, resume_text)
     except RuntimeError as e:
@@ -419,7 +425,7 @@ def get_screening_features_and_score(job_description, resume_text):
         return {
             "predicted_score": 0.0, "keyword_match_score": 0.0,
             "section_completeness_score": 0.0, "semantic_similarity": 0.0,
-            "length_score": 0.0, "raw_resume_sections": {}
+            "length_score": 0.0, "raw_resume_sections": {}, "years_experience": 0.0
         }
 
     # --- 2. Predict Score using ML Model ---
@@ -437,12 +443,12 @@ def get_screening_features_and_score(job_description, resume_text):
 
     # Keyword Match Score (for display)
     jd_keywords_set = set(get_top_keywords(cleaned_jd))
-    resume_keywords_set = set(get_top_keywords(cleaned_resume))
-    keyword_overlap_count_display = len(jd_keywords_set.intersection(resume_keywords_set))
+    resume_words_set = {word for word in re.findall(r'\b\w+\b', cleaned_resume) if word not in ALL_STOP_WORDS} # Ensure resume_words_set is defined
+    keyword_overlap_count_display = len(jd_keywords_set.intersection(resume_words_set))
     keyword_match_score_display = (keyword_overlap_count_display / len(jd_keywords_set)) * 100 if len(jd_keywords_set) > 0 else 0.0
 
     # Section Completeness Score (for display)
-    resume_sections = extract_sections(cleaned_resume) # This now calls the defined function
+    resume_sections = extract_sections(cleaned_resume)
     section_completeness_score_display = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
 
     # Semantic Similarity (for display - re-calculate using the clean text embeddings)
@@ -451,7 +457,7 @@ def get_screening_features_and_score(job_description, resume_text):
     semantic_similarity_display = cosine_similarity(jd_embedding_display.reshape(1, -1), resume_embedding_display.reshape(1, -1))[0][0] * 100
 
     # Length Score (for display)
-    length_score_display = calculate_length_score(cleaned_resume) # This now calls the defined function
+    length_score_display = calculate_length_score(cleaned_resume)
 
     return {
         "predicted_score": predicted_score,
@@ -796,7 +802,7 @@ if jd_text and resume_files:
         
         # Display a concise table for shortlisted candidates
         display_shortlisted_summary_cols = [
-            'candidate_name', 'predicted_score', 'years_experience', 'semantic_similarity', # Corrected 'years_exp' to 'years_experience' and 'keyword_match' to 'keyword_match_score' to match DB column names or scores dictionary
+            'candidate_name', 'predicted_score', 'years_experience', 'semantic_similarity',
             'keyword_match', 'ai_suggestion'
         ]
         
@@ -804,9 +810,9 @@ if jd_text and resume_files:
             shortlisted_from_db[display_shortlisted_summary_cols].rename(columns={
                 'candidate_name': 'Candidate Name',
                 'predicted_score': 'Score (%)',
-                'years_experience': 'Years Experience', # Corrected column name
+                'years_experience': 'Years Experience',
                 'semantic_similarity': 'Semantic Similarity (%)',
-                'keyword_match': 'Keyword Match (%)', # Corrected column name
+                'keyword_match': 'Keyword Match (%)',
                 'ai_suggestion': 'AI Suggestion'
             }),
             use_container_width=True,
