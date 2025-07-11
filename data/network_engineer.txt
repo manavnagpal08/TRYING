@@ -1,0 +1,36 @@
+Job Title: Network Engineer
+
+About Us:
+We are a leading company in IT infrastructure and networking looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to design, implement, and maintain robust and secure network infrastructure.
+
+The Role:
+As a Network Engineer, you will be responsible for designing and configuring network devices, monitoring network performance and troubleshooting issues, and implementing network security measures. You will work closely with IT infrastructure team to ensure high availability and performance of network services. This role requires a strong commitment to reliability and security.
+
+Key Responsibilities:
+- Design, configure, and troubleshoot network hardware including routers, switches, and firewalls (Cisco, Juniper).
+- Implement and manage network protocols (TCP/IP, OSPF, BGP, VLANs) and VPN solutions.
+- Monitor network performance, analyze traffic, and resolve complex network connectivity issues.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Networking, Information Technology, or a related engineering field or equivalent practical experience.
+- 3+ years of proven professional experience in Network Engineer or a closely related role.
+- Strong proficiency in Network Protocols (TCP/IP, OSPF, BGP), Routing & Switching, Firewalls.
+- Demonstrated experience with Cisco IOS/NX-OS, Juniper Junos, Network Monitoring Tools (e.g., SolarWinds, Nagios).
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with CCNA/CCNP, Cloud Networking (AWS VPC, Azure VNet), Network Automation (Python, Ansible).
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- ensuring the backbone of our digital operations is always robust and secure.

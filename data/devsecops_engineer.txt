@@ -1,0 +1,36 @@
+Job Title: DevSecOps Engineer
+
+About Us:
+We are a leading company in secure software development and operations looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to integrate security seamlessly into every stage of the software development lifecycle.
+
+The Role:
+As a DevSecOps Engineer, you will be responsible for automating security controls in CI/CD pipelines, implementing security best practices across cloud infrastructure, and conducting security assessments and threat modeling. You will work closely with DevSecOps and cybersecurity teams to ensure secure and compliant software delivery at speed. This role requires a strong commitment to security-first automation.
+
+Key Responsibilities:
+- Integrate security tools (SAST, DAST, SCA) into CI/CD pipelines for automated vulnerability detection.
+- Implement and manage cloud security configurations and policies (e.g., IAM, network security groups).
+- Conduct threat modeling, risk assessments, and provide secure coding guidance to developers.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Cybersecurity, DevOps, Computer Science, or Software Engineering or equivalent practical experience.
+- 4+ years of proven professional experience in DevSecOps Engineer or a closely related role.
+- Strong proficiency in CI/CD Security, Cloud Security (AWS/Azure/GCP), Container Security (Docker/Kubernetes).
+- Demonstrated experience with SAST/DAST/SCA Tools, Python/Bash Scripting, Infrastructure as Code (Terraform).
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Security Frameworks (NIST, OWASP), Incident Response, Penetration Testing, Kubernetes Security.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- building a culture of security by design in a fast-paced environment.

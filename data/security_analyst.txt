@@ -1,0 +1,36 @@
+Job Title: Security Analyst
+
+About Us:
+We are a leading company in cybersecurity operations looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to protect our digital assets and infrastructure from cyber threats.
+
+The Role:
+As a Security Analyst, you will be responsible for monitoring security systems for anomalies and threats, investigating and responding to security incidents, and performing vulnerability assessments and risk analysis. You will work closely with Security Operations Center (SOC) to maintain a strong security posture and ensure rapid incident resolution. This role requires a strong commitment to vigilance and rapid response.
+
+Key Responsibilities:
+- Monitor SIEM (Security Information and Event Management) systems for security alerts and events.
+- Conduct initial investigations of security incidents, analyze logs, and identify root causes.
+- Perform vulnerability scans, assist with patch management, and contribute to security awareness training.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Cybersecurity, Information Technology, or Computer Science or equivalent practical experience.
+- 2+ years of proven professional experience in Security Analyst or a closely related role.
+- Strong proficiency in Security Monitoring, Incident Response, Vulnerability Management.
+- Demonstrated experience with SIEM (Splunk/ELK), Network Security, Endpoint Protection, Linux/Windows OS.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with CompTIA Security+/CySA+, Penetration Testing, Threat Intelligence, Scripting (Python).
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- being on the front lines of cyber defense and protecting critical data.

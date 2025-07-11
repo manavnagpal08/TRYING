@@ -1,34 +1,36 @@
 Job Title: Data Scientist
 
 About Us:
-We are a leading company in data analytics looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning.
+We are a leading company in data analytics and artificial intelligence looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to extract actionable insights and build intelligent systems.
 
-Job Summary:
-As a Data Scientist, you will be responsible for building predictive models, analyzing large datasets, and communicating insights to stakeholders. You will work closely with data science team to drive data-driven decision-making.
+The Role:
+As a Data Scientist, you will be responsible for building predictive models, analyzing large, complex datasets, and communicating data-driven insights to diverse stakeholders. You will work closely with data science and analytics team to drive data-driven decision-making and product innovation. This role requires a strong commitment to analytical rigor and business impact.
 
 Key Responsibilities:
-- Develop and implement machine learning models using Python and R.
-- Perform exploratory data analysis and feature engineering.
-- Create compelling data visualizations and dashboards.
-- Collaborate with cross-functional teams.
-- Ensure high quality and timely delivery of projects.
-- Stay updated with industry best practices and emerging technologies.
+- Develop, validate, and deploy machine learning models for various business problems.
+- Perform extensive exploratory data analysis, feature engineering, and data cleaning.
+- Design and implement A/B tests and statistical experiments to measure impact.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
 
 Required Skills and Qualifications:
-- Bachelor's or Master's degree in Data Science, Statistics, or Computer Science.
-- X+ years of proven experience in Data Scientist or a similar role.
-- Strong proficiency in Python (Pandas, NumPy, Scikit-learn), R, SQL.
-- Experience with Machine Learning, Deep Learning, Statistical Modeling.
-- Excellent problem-solving and analytical skills.
-- Strong communication and interpersonal abilities.
+- Bachelor's or Master's degree in Data Science, Statistics, Computer Science, or Applied Mathematics or equivalent practical experience.
+- 3+ years of proven professional experience in Data Scientist or a closely related role.
+- Strong proficiency in Python (Pandas, NumPy, Scikit-learn, TensorFlow/PyTorch), R, SQL.
+- Demonstrated experience with Machine Learning, Deep Learning, Statistical Modeling, Data Visualization.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
 
 Preferred Qualifications:
-- Experience with TensorFlow, PyTorch, Spark, Tableau, Power BI, NLP.
-- Certifications relevant to the role.
-- Ability to work in a fast-paced and dynamic environment.
+- Experience with Spark, Hadoop, AWS/GCP/Azure ML services, NLP, Computer Vision.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
 
 Benefits:
-- Competitive salary and benefits package.
-- Opportunities for professional growth and development.
-- Flexible work arrangements.
-- Inclusive and supportive work environment.
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- working on challenging data problems with real-world impact.

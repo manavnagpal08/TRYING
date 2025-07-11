@@ -1,0 +1,36 @@
+Job Title: Database Administrator
+
+About Us:
+We are a leading company in data management and infrastructure looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to ensure the performance, security, and availability of our critical databases.
+
+The Role:
+As a Database Administrator, you will be responsible for managing and optimizing database systems, ensuring data security and integrity, and performing database backups and recovery. You will work closely with database operations team to maintain reliable and high-performing data storage solutions. This role requires a strong commitment to data integrity and system uptime.
+
+Key Responsibilities:
+- Install, configure, and maintain relational databases (e.g., MySQL, PostgreSQL, SQL Server, Oracle).
+- Monitor database performance, troubleshoot issues, and implement optimization strategies (tuning, indexing).
+- Perform regular database backups, recovery, and ensure disaster recovery readiness.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Information Technology, Database Administration or equivalent practical experience.
+- 4+ years of proven professional experience in Database Administrator or a closely related role.
+- Strong proficiency in SQL, Database Administration (DBA), Performance Tuning.
+- Demonstrated experience with MySQL/PostgreSQL/SQL Server/Oracle, Database Security, Backup & Recovery.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with NoSQL Databases (MongoDB, Cassandra), Cloud Databases (RDS, Azure SQL), Scripting (Python, Bash).
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- safeguarding and optimizing the core data assets of the company.

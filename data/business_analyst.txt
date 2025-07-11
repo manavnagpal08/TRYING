@@ -1,0 +1,36 @@
+Job Title: Business Analyst
+
+About Us:
+We are a leading company in business process optimization and system implementation looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to translate business needs into effective technical solutions.
+
+The Role:
+As a Business Analyst, you will be responsible for gathering and documenting detailed business requirements, analyzing current processes and identifying areas for improvement, and bridging the gap between business and technical teams. You will work closely with business analysis and project teams to ensure solutions align with strategic business objectives. This role requires a strong commitment to clarity and strategic alignment.
+
+Key Responsibilities:
+- Elicit, analyze, and document comprehensive business requirements using various techniques (interviews, workshops).
+- Create process flow diagrams, use cases, user stories, and functional specifications.
+- Facilitate requirements gathering sessions and serve as a liaison between business stakeholders and development teams.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Business Administration, Information Systems, or a related field or equivalent practical experience.
+- 3+ years of proven professional experience in Business Analyst or a closely related role.
+- Strong proficiency in Requirements Gathering, Process Modeling, Data Analysis.
+- Demonstrated experience with SQL, Jira, Confluence, Microsoft Visio/Lucidchart.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with CBAP/CCBA certification, Agile Methodologies, UI/UX understanding.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- shaping the future of our business processes and systems.

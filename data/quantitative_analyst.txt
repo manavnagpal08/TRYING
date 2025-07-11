@@ -1,0 +1,36 @@
+Job Title: Quantitative Analyst
+
+About Us:
+We are a leading company in financial markets and quantitative finance looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to develop sophisticated quantitative models and strategies for trading and risk management.
+
+The Role:
+As a Quantitative Analyst, you will be responsible for developing and implementing quantitative models for financial products, performing statistical analysis of market data, and researching and backtesting trading strategies. You will work closely with quantitative research team to generate alpha and manage risk effectively. This role requires a strong commitment to mathematical rigor and market insight.
+
+Key Responsibilities:
+- Develop, implement, and validate quantitative models for pricing, hedging, and risk management of financial derivatives.
+- Perform statistical analysis of large financial datasets to identify patterns and anomalies.
+- Research and backtest algorithmic trading strategies, optimizing for performance and robustness.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Quantitative Finance, Financial Engineering, Mathematics, Statistics, or Computer Science (with strong quant focus) or equivalent practical experience.
+- 2+ years of proven professional experience in Quantitative Analyst or a closely related role.
+- Strong proficiency in Quantitative Modeling, Financial Derivatives, Probability & Statistics.
+- Demonstrated experience with Python (NumPy, Pandas, SciPy), C++, Matlab, SQL, Time Series Analysis.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Machine Learning in Finance, Algorithmic Trading, Market Microstructure, CFA/FRM certification.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- working at the intersection of finance and technology to drive market innovation.

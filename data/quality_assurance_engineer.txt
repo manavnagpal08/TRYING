@@ -1,0 +1,36 @@
+Job Title: Quality Assurance Engineer
+
+About Us:
+We are a leading company in software quality assurance looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to ensure the delivery of high-quality, reliable, and user-friendly software products.
+
+The Role:
+As a Quality Assurance Engineer, you will be responsible for designing and executing comprehensive test plans, identifying, documenting, and tracking software defects, and contributing to automation testing efforts. You will work closely with QA and engineering teams to maintain high standards of product quality and user satisfaction. This role requires a strong commitment to meticulousness and quality focus.
+
+Key Responsibilities:
+- Develop, review, and execute detailed test cases and test scripts for web and mobile applications.
+- Perform functional, regression, integration, and performance testing.
+- Utilize bug tracking systems (e.g., Jira, Azure DevOps) to report and manage defects effectively.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Quality Assurance, or a related technical field or equivalent practical experience.
+- 2+ years of proven professional experience in Quality Assurance Engineer or a closely related role.
+- Strong proficiency in Software Testing Methodologies, Test Case Design, Manual Testing.
+- Demonstrated experience with Bug Tracking Tools (Jira), SQL, API Testing (Postman).
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Automation Testing (Selenium, Cypress), Python/Java/JavaScript for scripting, Performance Testing (JMeter).
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- ensuring a flawless user experience for our innovative products.

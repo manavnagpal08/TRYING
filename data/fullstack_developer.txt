@@ -1,0 +1,36 @@
+Job Title: Fullstack Developer
+
+About Us:
+We are a leading company in end-to-end software development looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to build comprehensive and integrated web applications.
+
+The Role:
+As a Fullstack Developer, you will be responsible for developing both frontend and backend components, designing and implementing APIs and user interfaces, and ensuring seamless integration across the stack. You will work closely with fullstack development team to deliver complete and functional web solutions. This role requires a strong commitment to versatility and holistic development.
+
+Key Responsibilities:
+- Develop and maintain both client-side and server-side components of web applications.
+- Design and implement RESTful APIs, database schemas, and user interfaces.
+- Collaborate with product managers and designers to translate requirements into technical solutions.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Software Engineering or equivalent practical experience.
+- 3+ years of proven professional experience in Fullstack Developer or a closely related role.
+- Strong proficiency in JavaScript/TypeScript, React/Angular/Vue, Node.js/Python/Java.
+- Demonstrated experience with RESTful APIs, SQL/NoSQL Databases, HTML, CSS, Git.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Docker, AWS/Azure/GCP, CI/CD, Unit/Integration Testing.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- contributing across the entire technology stack of our products.

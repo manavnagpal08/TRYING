@@ -1,0 +1,36 @@
+Job Title: AI/ML Engineer
+
+About Us:
+We are a leading company in artificial intelligence and machine learning solutions looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to design, develop, and deploy cutting-edge AI/ML models into production.
+
+The Role:
+As a AI/ML Engineer, you will be responsible for building and optimizing machine learning pipelines, deploying and managing AI/ML models in production environments, and collaborating with data scientists to transition research to production. You will work closely with AI/ML engineering team to scale our AI capabilities and deliver intelligent products. This role requires a strong commitment to scalability and model performance.
+
+Key Responsibilities:
+- Design, build, and maintain robust ML pipelines for data ingestion, feature engineering, and model training.
+- Deploy and manage machine learning models in production environments using Docker and Kubernetes.
+- Implement MLOps practices for continuous integration, delivery, and monitoring of ML systems.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Machine Learning Engineering, or a related quantitative field or equivalent practical experience.
+- 3+ years of proven professional experience in AI/ML Engineer or a closely related role.
+- Strong proficiency in Python, TensorFlow/PyTorch, ML Pipelines, MLOps.
+- Demonstrated experience with Docker, Kubernetes, AWS/GCP/Azure ML Services, RESTful APIs.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Spark, Kafka, Distributed Systems, Model Monitoring, LLMs, Prompt Engineering.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- building and scaling the next generation of AI-powered products.

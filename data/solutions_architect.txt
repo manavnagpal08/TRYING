@@ -1,0 +1,36 @@
+Job Title: Solutions Architect
+
+About Us:
+We are a leading company in enterprise software solutions looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to design and deliver innovative technical solutions that meet complex business needs.
+
+The Role:
+As a Solutions Architect, you will be responsible for translating business requirements into technical architectures, designing scalable and robust system solutions, and providing technical leadership and guidance to development teams. You will work closely with architecture and engineering teams to ensure the successful implementation of complex software projects. This role requires a strong commitment to strategic vision and technical depth.
+
+Key Responsibilities:
+- Lead the design of end-to-end technical solutions, including system architecture, integration, and data flow.
+- Translate complex business requirements into clear, actionable technical specifications and design documents.
+- Provide technical guidance and mentorship to development teams throughout the software development lifecycle.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Software Engineering, or a related technical field or equivalent practical experience.
+- 7+ years of proven professional experience in Solutions Architect or a closely related role.
+- Strong proficiency in Solution Architecture, System Design, Cloud Platforms (AWS/Azure/GCP).
+- Demonstrated experience with Microservices, RESTful APIs, Database Design, Enterprise Integration Patterns.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with TOGAF/Zachman, Domain-Driven Design, Kubernetes, Data Modeling, Client-Facing Consulting.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- shaping the technical direction of high-impact enterprise solutions.

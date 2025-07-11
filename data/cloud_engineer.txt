@@ -1,0 +1,36 @@
+Job Title: Cloud Engineer
+
+About Us:
+We are a leading company in cloud infrastructure and automation looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to build, deploy, and manage scalable and resilient cloud solutions.
+
+The Role:
+As a Cloud Engineer, you will be responsible for implementing and maintaining cloud infrastructure, automating cloud deployments and operations, and optimizing cloud resource utilization and costs. You will work closely with cloud engineering and DevOps teams to ensure efficient and reliable cloud platform operations. This role requires a strong commitment to automation and efficiency.
+
+Key Responsibilities:
+- Design, implement, and manage cloud resources (EC2, S3, Lambda, RDS) on AWS, Azure, or GCP.
+- Develop and maintain Infrastructure as Code (IaC) using Terraform, CloudFormation, or ARM templates.
+- Implement CI/CD pipelines for cloud-native applications and automate operational tasks.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Cloud Computing, DevOps, or a related engineering field or equivalent practical experience.
+- 3+ years of proven professional experience in Cloud Engineer or a closely related role.
+- Strong proficiency in AWS/Azure/GCP, Docker, Kubernetes, Terraform.
+- Demonstrated experience with Python/Bash Scripting, CI/CD, Linux, Networking.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Serverless Architectures, Monitoring (Prometheus, Grafana), Security Best Practices.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- building and scaling the foundational cloud infrastructure for our products.

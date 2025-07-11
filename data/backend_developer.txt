@@ -1,16 +1,36 @@
 Job Title: Backend Developer
 
-We are hiring a Backend Developer responsible for server-side logic and integration with front-end technologies.
+About Us:
+We are a leading company in scalable software solutions looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to build robust, high-performance, and secure backend systems.
 
-Responsibilities:
-- Develop RESTful APIs and server-side logic
-- Manage database systems and performance
-- Implement security and data protection
-- Optimize applications for speed and scalability
+The Role:
+As a Backend Developer, you will be responsible for designing and implementing server-side logic and APIs, managing database interactions and data storage solutions, and optimizing system performance and scalability. You will work closely with backend development team to ensure the reliability and efficiency of our core services. This role requires a strong commitment to scalability and reliability.
 
-Skills Required:
-- Proficient in Node.js, Django, or Flask
-- Solid understanding of databases (SQL, MongoDB)
-- Familiarity with Docker, CI/CD, and microservices
-- Strong grasp of authentication and authorization protocols
-- Comfortable with version control (Git)
+Key Responsibilities:
+- Develop and maintain robust backend services and APIs using Python (Django/Flask), Java (Spring Boot), or Node.js (Express).
+- Design and optimize database schemas (SQL/NoSQL) and ensure efficient data access.
+- Implement security best practices and ensure data integrity in all backend systems.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Software Engineering or equivalent practical experience.
+- 2+ years of proven professional experience in Backend Developer or a closely related role.
+- Strong proficiency in Python/Java/Node.js, RESTful APIs, Microservices.
+- Demonstrated experience with SQL/NoSQL Databases (PostgreSQL, MongoDB), Git, Cloud Platforms (AWS/Azure/GCP).
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Docker, Kubernetes, Kafka, Redis, Unit Testing, CI/CD.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- building the foundational systems that power our entire product suite.

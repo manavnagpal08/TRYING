@@ -1,0 +1,36 @@
+Job Title: Frontend Developer
+
+About Us:
+We are a leading company in web application development looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to build intuitive and high-performance user interfaces.
+
+The Role:
+As a Frontend Developer, you will be responsible for developing responsive web applications, implementing user-facing features, and optimizing web performance and accessibility. You will work closely with frontend development team to deliver exceptional user experiences. This role requires a strong commitment to user experience and performance.
+
+Key Responsibilities:
+- Develop and maintain responsive and interactive user interfaces using React, Angular, or Vue.js.
+- Translate UI/UX designs and wireframes into high-quality code.
+- Optimize web applications for maximum speed, scalability, and cross-browser compatibility.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Computer Science, Web Development, or a related field or equivalent practical experience.
+- 2+ years of proven professional experience in Frontend Developer or a closely related role.
+- Strong proficiency in JavaScript (ES6+), HTML5, CSS3, React/Angular/Vue.js.
+- Demonstrated experience with Responsive Design, RESTful APIs, Git, Webpack/Vite.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with TypeScript, Redux/Vuex/NgRx, Jest/React Testing Library, Tailwind CSS, Figma.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- creating visually appealing and highly interactive web applications.

@@ -1,34 +1,36 @@
 Job Title: DevOps Specialist
 
 About Us:
-We are a leading company in software delivery automation looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning.
+We are a leading company in software delivery and cloud infrastructure looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to accelerate software delivery through automation and robust infrastructure.
 
-Job Summary:
-As a DevOps Specialist, you will be responsible for automating CI/CD pipelines, managing infrastructure as code, and optimizing deployment processes. You will work closely with development and operations teams to accelerate software delivery and improve system reliability.
+The Role:
+As a DevOps Specialist, you will be responsible for automating CI/CD pipelines and deployment processes, managing and optimizing cloud infrastructure as code, and implementing monitoring, logging, and alerting solutions. You will work closely with development and operations teams to improve system reliability, scalability, and efficiency. This role requires a strong commitment to automation and operational excellence.
 
 Key Responsibilities:
-- Design, implement, and maintain CI/CD pipelines using Jenkins, GitLab CI, or similar tools.
-- Manage cloud infrastructure using Infrastructure as Code (IaC) tools like Terraform and Ansible.
-- Implement monitoring and logging solutions (Prometheus, Grafana, ELK Stack) for system health.
-- Collaborate with cross-functional teams.
-- Ensure high quality and timely delivery of projects.
-- Stay updated with industry best practices and emerging technologies.
+- Design, implement, and maintain robust CI/CD pipelines using Jenkins, GitLab CI, or GitHub Actions.
+- Provision and manage cloud infrastructure on AWS, Azure, or GCP using Terraform and Ansible.
+- Implement and manage containerization technologies like Docker and Kubernetes.
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
 
 Required Skills and Qualifications:
-- Bachelor's or Master's degree in Computer Science, DevOps, or a related field.
-- X+ years of proven experience in DevOps Specialist or a similar role.
+- Bachelor's or Master's degree in Computer Science, DevOps, or Software Engineering or equivalent practical experience.
+- 3+ years of proven professional experience in DevOps Specialist or a closely related role.
 - Strong proficiency in CI/CD, Docker, Kubernetes, Cloud Platforms (AWS/Azure/GCP).
-- Experience with Terraform, Ansible, Scripting (Python/Bash).
-- Excellent problem-solving and analytical skills.
-- Strong communication and interpersonal abilities.
+- Demonstrated experience with Terraform, Ansible, Python/Bash Scripting, Linux System Administration.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
 
 Preferred Qualifications:
-- Experience with Git, Linux, Microservices, System Administration.
-- Certifications relevant to the role.
-- Ability to work in a fast-paced and dynamic environment.
+- Experience with Prometheus, Grafana, ELK Stack, Git, Microservices Architecture.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
 
 Benefits:
-- Competitive salary and benefits package.
-- Opportunities for professional growth and development.
-- Flexible work arrangements.
-- Inclusive and supportive work environment.
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- driving continuous innovation and operational stability.

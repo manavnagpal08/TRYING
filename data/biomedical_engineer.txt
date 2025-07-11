@@ -1,0 +1,36 @@
+Job Title: Biomedical Engineer
+
+About Us:
+We are a leading company in medical device and healthcare technology looking for passionate and skilled individuals to join our team. We value innovation, collaboration, and continuous learning, striving to design and develop innovative medical devices and healthcare solutions.
+
+The Role:
+As a Biomedical Engineer, you will be responsible for designing and testing medical devices, conducting research and development for new technologies, and ensuring regulatory compliance for medical products. You will work closely with R&D and engineering teams to improve patient care through advanced medical technology. This role requires a strong commitment to precision and patient safety.
+
+Key Responsibilities:
+- Design, develop, and test medical devices, instruments, or software applications.
+- Conduct research and experiments to evaluate new biomedical technologies and materials.
+- Ensure all designs and processes comply with FDA regulations (e.g., 21 CFR Part 820) and ISO standards (e.g., ISO 13485).
+- Collaborate effectively with cross-functional teams (e.g., engineering, product, marketing).
+- Ensure high quality, adherence to best practices, and timely delivery of projects/tasks.
+- Continuously learn and stay updated with industry trends, emerging technologies, and relevant regulations.
+
+Required Skills and Qualifications:
+- Bachelor's or Master's degree in Biomedical Engineering, Electrical Engineering, Mechanical Engineering, or a related field or equivalent practical experience.
+- 3+ years of proven professional experience in Biomedical Engineer or a closely related role.
+- Strong proficiency in Medical Device Design, CAD Software, Biocompatibility, Regulatory Compliance (FDA, ISO).
+- Demonstrated experience with Prototyping, Testing & Validation, Signal Processing, Biomaterials.
+- Excellent analytical, problem-solving, and critical thinking skills.
+- Superior communication (written and verbal) and interpersonal abilities.
+
+Preferred Qualifications:
+- Experience with Matlab, Python, LabVIEW, Embedded Systems, Clinical Trials experience.
+- Relevant industry certifications (e.g., PMP, AWS, CFA, SHRM).
+- Ability to thrive in a fast-paced, dynamic, and evolving environment.
+- A strong portfolio or demonstrable projects (where applicable).
+
+Benefits:
+- Competitive salary and comprehensive benefits package (health, dental, vision).
+- Generous paid time off and flexible work arrangements.
+- Opportunities for continuous professional growth, training, and career development.
+- A collaborative, inclusive, and supportive work environment.
+- innovating in healthcare to directly enhance patient outcomes.
