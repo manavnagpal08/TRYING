@@ -27,6 +27,7 @@ def init_db():
     conn = sqlite3.connect(DATABASE_FILE)
     c = conn.cursor()
     # IMPORTANT: Ensure 'years_experience' and 'email' columns are explicitly added here
+    # and 'ai_suggestion' is present.
     c.execute('''
         CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +42,7 @@ def init_db():
             length_score REAL,
             shortlisted BOOLEAN,
             full_resume_text TEXT,
-            ai_suggestion TEXT,
+            ai_suggestion TEXT, -- This column should already be here
             years_experience REAL, -- Explicitly added this column
             email TEXT -- Explicitly added this column
         )
@@ -534,6 +535,12 @@ def get_screening_results_from_db(jd_hash=None):
 
     df = pd.DataFrame(results, columns=columns)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
+    
+    # Rename columns for consistent display in UI (Years Experience, AI Suggestion)
+    df = df.rename(columns={
+        'years_experience': 'Years Experience',
+        'ai_suggestion': 'AI Suggestion'
+    })
     return df
 
 def update_shortlist_status_in_db(jd_hash, candidate_name, is_shortlisted):
@@ -716,7 +723,7 @@ if jd_text and resume_files:
             "Section Completeness (%)": f"{scores['section_completeness_score']:.1f}",
             "Semantic Similarity (%)": f"{scores['semantic_similarity']:.1f}",
             "Length Score (%)": f"{scores['length_score']:.1f}",
-            "Years Experience": f"{scores['years_experience']:.1f}",
+            "Years Experience": f"{scores['years_experience']:.1f}", # Use consistent display name here
             "Email": candidate_email,
             "AI Suggestion": ai_suggestion_text,
             "Full Resume Text": full_resume_text,
@@ -776,109 +783,106 @@ if not st.session_state.results_df.empty:
     st.markdown("---")
     st.markdown("## ✅ Shortlisted Candidates")
     st.caption("Candidates you have marked as 'Shortlisted'.")
-    shortlisted_candidates = st.session_state.results_df[st.session_state.results_df['Shortlisted'] == True]
+    # Fetch from DB for the current JD to ensure latest shortlist status
+    all_candidates_for_current_jd = get_screening_results_from_db(jd_hash=current_jd_hash)
+    shortlisted_candidates_db = all_candidates_for_current_jd[all_candidates_for_current_jd['shortlisted'] == True]
 
-    if not shortlisted_candidates.empty:
-        for idx, row in shortlisted_candidates.iterrows():
-            st.write(f"- **{row['Candidate Name']}** ({row['Score (%)']}%)")
-            with st.expander(f"AI Suggestion for {row['Candidate Name']}"):
+
+    if not shortlisted_candidates_db.empty:
+        for idx, row in shortlisted_candidates_db.iterrows():
+            st.write(f"- **{row['candidate_name']}** ({row['Score (%)']}%)")
+            with st.expander(f"AI Suggestion for {row['candidate_name']}"):
                 st.info(row['AI Suggestion'])
     else:
-        st.info("No candidates have been shortlisted yet for the current run.")
+        st.info("No candidates have been shortlisted yet for the current job description.")
 
     st.markdown("---")
     st.markdown("## 📋 Comprehensive Screening Table")
     st.caption("Review all candidates, their scores, and manage their status.")
 
-    # Convert numeric columns for display styling
-    st.session_state.results_df['Score (%)'] = st.session_state.results_df['Score (%)'].astype(float)
-    st.session_state.results_df['Keyword Match (%)'] = st.session_state.results_df['Keyword Match (%)'].astype(float)
-    st.session_state.results_df['Section Completeness (%)'] = st.session_state.results_df['Section Completeness (%)'].astype(float)
-    st.session_state.results_df['Semantic Similarity (%)'] = st.session_state.results_df['Semantic Similarity (%)'].astype(float)
-    st.session_state.results_df['Length Score (%)'] = st.session_state.results_df['Length Score (%)'].astype(float)
-    st.session_state.results_df['Years Experience'] = st.session_state.results_df['Years Experience'].astype(float)
+    # Fetch the latest data from DB for the current JD to ensure the table reflects true DB state
+    current_jd_results_from_db = get_screening_results_from_db(jd_hash=current_jd_hash)
 
-    # Apply conditional formatting for 'Score (%)' and 'Years Experience'
-    def color_score(val):
-        color = 'green' if val >= cutoff else ('orange' if cutoff - 15 <= val < cutoff else 'red')
-        return f'background-color: {color}'
-
-    def highlight_experience(val):
-        color = 'green' if val >= min_experience else 'red'
-        return f'background-color: {color}'
-
-    # Use a copy to avoid SettingWithCopyWarning with styler
-    display_df = st.session_state.results_df.copy()
-
-    # Add interactive columns for shortlist and email
-    display_df['Shortlist'] = False # Default to False, will be updated by checkbox
-    display_df['Email Candidate'] = "" # Placeholder for button
+    # Ensure numeric types for proper sorting and display
+    for col in ['Score (%)', 'Keyword Match', 'Section Completeness', 'Semantic Similarity', 'Length Score', 'Years Experience']:
+        if col in current_jd_results_from_db.columns: # Check if column exists before converting
+            current_jd_results_from_db[col] = pd.to_numeric(current_jd_results_from_db[col], errors='coerce').fillna(0).round(1)
 
     # Convert boolean to display-friendly string if needed, otherwise keep as bool for checkbox
-    # display_df['Shortlisted'] = display_df['Shortlisted'].apply(lambda x: "Yes" if x else "No")
+    # current_jd_results_from_db['shortlisted_display'] = current_jd_results_from_db['shortlisted'].apply(lambda x: "Yes" if x else "No")
 
+    # Add a 'Tag' column for quick categorization based on current run's scores
+    current_jd_results_from_db['Tag'] = current_jd_results_from_db.apply(lambda row: "🔥 Top Talent" if row['Score (%)'] > 90 and row['Years Experience'] >= 3 else (
+        "✅ Good Fit" if row['Score (%)'] >= 75 else "⚠️ Needs Review"), axis=1)
+
+    # Display using st.data_editor for interactive checkboxes
     edited_df = st.data_editor(
-        display_df,
+        current_jd_results_from_db,
         column_config={
-            "Full Resume Text": st.column_config.Column(
+            "full_resume_text": st.column_config.Column(
                 "Full Resume",
                 help="Full text extracted from the resume.",
                 width="small",
                 display_as="hidden"
             ),
-            "AI Suggestion": st.column_config.Column(
+            "AI Suggestion": st.column_config.Column( # This is now AI Suggestion from DB
                 "AI Suggestion",
                 help="AI-generated summary and recommendation for the candidate.",
                 width="large",
                 display_as="expander"
             ),
-            "Shortlisted": st.column_config.CheckboxColumn(
+            "shortlisted": st.column_config.CheckboxColumn( # Use the actual DB column name
                 "Shortlisted?",
                 help="Mark candidate as shortlisted",
                 default=False,
             ),
-            "Email": st.column_config.Column(
+            "email": st.column_config.Column(
                 "Email",
                 help="Candidate's email address.",
                 width="small",
             ),
-            "Score (%)": st.column_config.NumberColumn(
+            "predicted_score": st.column_config.NumberColumn(
                 "Score (%)",
                 help="Predicted relevance score.",
                 format="%.1f",
                 width="small",
             ),
-            "Years Experience": st.column_config.NumberColumn(
+            "years_experience": st.column_config.NumberColumn(
                 "Years Experience",
                 help="Extracted years of experience.",
                 format="%.1f",
                 width="small",
             ),
-            "Keyword Match (%)": st.column_config.NumberColumn(
-                "Keywords",
+            "keyword_match": st.column_config.NumberColumn(
+                "Keywords (%)",
                 help="Percentage of JD keywords found in resume.",
                 format="%.1f",
                 width="small",
             ),
-            "Section Completeness (%)": st.column_config.NumberColumn(
-                "Sections",
+            "section_completeness": st.column_config.NumberColumn(
+                "Sections (%)",
                 help="Completeness of required resume sections.",
                 format="%.1f",
                 width="small",
             ),
-            "Semantic Similarity (%)": st.column_config.NumberColumn(
-                "Semantic",
+            "semantic_similarity": st.column_config.NumberColumn(
+                "Semantic (%)",
                 help="Conceptual similarity between resume and JD.",
                 format="%.1f",
                 width="small",
             ),
-            "Length Score (%)": st.column_config.NumberColumn(
-                "Length",
+            "length_score": st.column_config.NumberColumn(
+                "Length (%)",
                 help="Score based on resume length.",
                 format="%.1f",
                 width="small",
-            )
+            ),
+            # Hide raw DB columns that are renamed for display
+            "job_description_hash": None,
+            "job_description_summary": None,
+            "timestamp": None
         },
+        order=("candidate_name", "predicted_score", "years_experience", "email", "AI Suggestion", "shortlisted", "keyword_match", "section_completeness", "semantic_similarity", "length_score"),
         hide_index=True,
         use_container_width=True,
         num_rows="dynamic",
@@ -890,21 +894,15 @@ if not st.session_state.results_df.empty:
         updated_rows_info = st.session_state.screening_results_table['edited_rows']
         if updated_rows_info:
             for index, updates in updated_rows_info.items():
-                candidate_name = edited_df.loc[index, 'Candidate Name']
-                if 'Shortlisted' in updates:
-                    is_shortlisted = updates['Shortlisted']
+                candidate_name = edited_df.loc[index, 'candidate_name'] # Use actual DB column name
+                if 'shortlisted' in updates: # Use actual DB column name
+                    is_shortlisted = updates['shortlisted']
                     update_shortlist_status_in_db(current_jd_hash, candidate_name, is_shortlisted)
-                    # Update the session_state.results_df directly to reflect changes immediately
-                    st.session_state.results_df.loc[st.session_state.results_df['Candidate Name'] == candidate_name, 'Shortlisted'] = is_shortlisted
                     st.toast(f"Updated {candidate_name} shortlist status to {is_shortlisted}")
-                if 'Email Candidate' in updates and updates['Email Candidate']:
-                    recipient_email = edited_df.loc[index, 'Email']
-                    job_title = jd_option if jd_option != "Upload my own" else "Job Role" # Or extract actual job title from JD
-                    if recipient_email and recipient_email != "N/A":
-                        mailto_link = create_mailto_link(recipient_email, candidate_name, job_title)
-                        st.markdown(f"**Click to compose email for {candidate_name}:** [📧 Email]({mailto_link})", unsafe_allow_html=True)
-                    else:
-                        st.warning(f"No email address found for {candidate_name}.")
+                    st.rerun() # Rerun to reflect changes in the UI and shortlisted section
+
+else:
+    st.info("Upload a Job Description and Resumes to begin screening.")
 
 # --- Past Screening Results ---
 st.markdown("---")
@@ -934,20 +932,11 @@ else:
     past_results_df = get_screening_results_from_db(selected_hash)
 
 if not past_results_df.empty:
-    # Clean up column names for display and convert types
-    past_results_df = past_results_df.rename(columns={
-        'predicted_score': 'Score (%)',
-        'keyword_match': 'Keyword Match (%)',
-        'section_completeness': 'Section Completeness (%)',
-        'semantic_similarity': 'Semantic Similarity (%)',
-        'length_score': 'Length Score (%)',
-        'years_experience': 'Years Experience',
-        'ai_suggestion': 'AI Suggestion'
-    })
-
+    # Column names are already renamed to 'Years Experience' and 'AI Suggestion' by get_screening_results_from_db
     # Ensure numeric types for proper sorting and display
-    for col in ['Score (%)', 'Keyword Match (%)', 'Section Completeness (%)', 'Semantic Similarity (%)', 'Length Score (%)', 'Years Experience']:
-        past_results_df[col] = pd.to_numeric(past_results_df[col], errors='coerce').fillna(0).round(1)
+    for col in ['Score (%)', 'Keyword Match', 'Section Completeness', 'Semantic Similarity', 'Length Score', 'Years Experience']:
+        if col in past_results_df.columns:
+            past_results_df[col] = pd.to_numeric(past_results_df[col], errors='coerce').fillna(0).round(1)
 
     # Sort by Score (%) descending
     past_results_df = past_results_df.sort_values(by='Score (%)', ascending=False).reset_index(drop=True)
@@ -955,9 +944,9 @@ if not past_results_df.empty:
     # Prepare for display, hiding large text fields by default
     st.dataframe(
         past_results_df[[
-            'timestamp', 'candidate_name', 'Score (%)', 'Keyword Match (%)',
-            'Section Completeness (%)', 'Semantic Similarity (%)', 'Length Score (%)',
-            'Years Experience', 'Email', 'Shortlisted', 'AI Suggestion'
+            'timestamp', 'candidate_name', 'Score (%)', 'Keyword Match',
+            'Section Completeness', 'Semantic Similarity', 'Length Score',
+            'Years Experience', 'email', 'shortlisted', 'AI Suggestion'
         ]],
         column_config={
             "timestamp": "Date",
@@ -967,10 +956,17 @@ if not past_results_df.empty:
                 help="AI-generated summary and recommendation.",
                 display_as="expander"
             ),
-            "Shortlisted": st.column_config.CheckboxColumn(
+            "shortlisted": st.column_config.CheckboxColumn( # Use the actual DB column name
                 "Shortlisted?",
                 disabled=True # Disable editing for past results view
-            )
+            ),
+            "email": "Email", # Display email column
+            "Score (%)": st.column_config.NumberColumn(format="%.1f"),
+            "Years Experience": st.column_config.NumberColumn(format="%.1f"),
+            "Keyword Match": st.column_config.NumberColumn(format="%.1f"),
+            "Section Completeness": st.column_config.NumberColumn(format="%.1f"),
+            "Semantic Similarity": st.column_config.NumberColumn(format="%.1f"),
+            "Length Score": st.column_config.NumberColumn(format="%.1f")
         },
         hide_index=True,
         use_container_width=True
