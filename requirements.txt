@@ -15,5 +15,4 @@ plotly
 statsmodels 
 pypdf
 transformers
-huggingface_hutransformers
 huggingface_hub
