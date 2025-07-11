@@ -16,3 +16,4 @@ statsmodels
 pypdf
 transformers
 huggingface_hub
+xgboost
