@@ -260,7 +260,47 @@ CUSTOM_STOP_WORDS = set([
     "cloud engineer", "cybersecurity analyst", "product manager", "project manager",
     "business analyst", "marketing manager", "sales manager", "hr manager", "financial analyst",
     "accountant", "auditor", "consultant", "director", "manager", "lead", "senior", "junior",
-    "associate", "specialist", "coordinator", "assistant", "intern", "co-op", "trainee", "apprentice",
+    "associate", "specialist", "coordinator", "assistant", "intern", "engineer", "analyst",
+    "architect", "strategist", "expert", "professional", "consultant", "advisor", "officer",
+    "executive", "president", "vice president", "ceo", "cto", "cfo", "coo", "chief", "head",
+    "group", "division", "department", "unit", "section", "team", "office", "company", "corporation",
+    "inc", "ltd", "llc", "corp", "group", "holdings", "solutions", "services", "technologies",
+    "systems", "consulting", "advisory", "management", "financial", "digital", "global",
+    "international", "national", "regional", "local", "public", "private", "government",
+    "non-profit", "startup", "mid-size", "enterprise", "fortune", "global", "innovative",
+    "cutting-edge", "leading", "pioneering", "transformative", "disruptive", "scalable",
+    "robust", "reliable", "secure", "efficient", "effective", "optimized", "automated",
+    "integrated", "seamless", "user-friendly", "intuitive", "responsive", "dynamic",
+    "interactive", "engaging", "compelling", "impactful", "sustainable", "ethical",
+    "compliant", "governance", "risk", "compliance", "regulatory", "standard", "standards",
+    "best practices", "methodology", "methodologies", "process", "processes", "procedure",
+    "procedures", "guideline", "guidelines", "framework", "frameworks", "tool", "tools",
+    "technology", "technologies", "platform", "platforms", "solution", "solutions",
+    "system", "systems", "architecture", "design", "development", "implementation",
+    "deployment", "maintenance", "support", "operations", "monitoring", "analysis",
+    "reporting", "visualization", "dashboard", "dashboards", "metrics", "kpis", "performance",
+    "optimization", "automation", "integration", "migration", "transformation", "upgrade",
+    "update", "patch", "patches", "troubleshooting", "debugging", "testing", "quality",
+    "assurance", "control", "auditing", "compliance", "security", "privacy", "data",
+    "information", "analytics", "intelligence", "insight", "insights", "strategy",
+    "planning", "execution", "management", "leadership", "mentoring", "coaching",
+    "training", "development", "recruitment", "hiring", "onboarding", "retention",
+    "employee", "engagement", "relations", "compensation", "benefits", "payroll",
+    "hr", "human resources", "talent acquisition", "talent management", "workforce",
+    "diversity", "inclusion", "equity", "belonging", "csr", "sustainability", "environmental",
+    "social", "governance", "ethics", "integrity", "professionalism", "communication",
+    "presentation", "negotiation", "collaboration", "teamwork", "interpersonal",
+    "problem solving", "critical thinking", "analytical", "creative", "innovative",
+    "adaptable", "flexible", "resilient", "organized", "detail-oriented", "proactive",
+    "self-starter", "independent", "results-driven", "client-facing", "stakeholder management",
+    "vendor management", "budget management", "cost reduction", "process improvement",
+    "standardization", "quality management", "project management", "program management",
+    "portfolio management", "agile", "scrum", "kanban", "waterfall", "lean", "six sigma",
+    "pmp", "prince2", "itil", "cobit", "cism", "cissp", "ceh", "security+", "network+",
+    "a+", "linux+", "ccna", "ccnp", "ccie", "aws", "azure", "gcp", "certified",
+    "developer", "architect", "sysops", "administrator", "specialty", "professional",
+    "expert", "master", "principal", "distinguished", "fellow", "senior staff", "staff",
+    "junior staff", "associate staff", "intern", "co-op", "trainee", "apprentice",
     "volunteer", "pro-bono", "freelance", "contract", "temp", "full-time", "part-time",
     "casual", "seasonal", "gig", "remote", "hybrid", "onsite", "in-office", "field-based",
     "travel", "relocation", "visa sponsorship", "eligible to work", "right to work",
@@ -413,8 +453,63 @@ CUSTOM_STOP_WORDS = set([
     "people's bank of china", "pboc", "rbi", "bank of england", "boe", "bank of japan", "boj",
     "bank of canada", "boc", "european central bank", "ecb", "swiss national bank", "snb",
     "australian treasury", "reserve bank of australia", "rba", "new zealand treasury",
-    "reserve bank of new zealand", "rbnz", "fiji reserve bank", "rbf", "papua new guinea central bank",
-    "bpng", "solomon islands central bank", "cbsi", "vanuatu reserve bank", "rbv", "new caledonia central bank",
+    "reserve bank of new zealand", "rbnz", "securities and exchange board of india", "sebi",
+    "china securities regulatory commission", "csrc", "japan financial services agency", "jfsa",
+    "south korea financial services commission", "fsc", "brazil central bank", "bcb",
+    "mexico central bank", "banxico", "south africa reserve bank", "sarb", "nigeria central bank",
+    "cbn", "uae central bank", "cbuae", "saudi central bank", "sacc", "qatar central bank", "qcb",
+    "egypt central bank", "cbe", "turkey central bank", "cbrt", "russia central bank", "cbrf",
+    "poland central bank", "nbp", "czech national bank", "cnb", "hungary central bank", "mnb",
+    "romania national bank", "bnrx", "bulgaria national bank", "bnb", "greece central bank", "bog",
+    "portugal central bank", "bp", "ireland central bank", "cbi", "belgium national bank", "nbb",
+    "netherlands central bank", "dnb", "austria central bank", "oenb", "finland central bank", "bof",
+    "sweden central bank", "riksbank", "norway central bank", "norges bank", "denmark central bank",
+    "dnb", "iceland central bank", "cbis", "greenland central bank", "gl", "faroes central bank",
+    "fb", "malta central bank", "cbm", "cyprus central bank", "cbc", "luxembourg central bank", "bcl",
+    "liechtenstein central bank", "fma", "monaco central bank", "bdm", "san marino central bank",
+    "bcs", "vatican city central bank", "vcb", "andorra central bank", "anc", "kosovo central bank",
+    "cbk", "montenegro central bank", "cbcg", "albania central bank", "bsa", "macedonia central bank",
+    "nbrm", "serbia national bank", "nbs", "bosnia and herzegovina central bank", "cbbh",
+    "croatia national bank", "hnb", "slovenia central bank", "bsi", "slovakia central bank", "nbs",
+    "estonia central bank", "eesti pank", "latvia central bank", "banka latvijas", "lithuania central bank",
+    "lietuvos bankas", "belarus central bank", "nbrb", "ukraine national bank", "nbu",
+    "moldova national bank", "bnm", "georgia national bank", "nbg", "armenia central bank", "cba",
+    "azerbaijan central bank", "cbar", "kazakhstan national bank", "nbk", "kyrgyzstan national bank",
+    "nbkr", "uzbekistan central bank", "cbu", "turkmenistan central bank", "cbt", "tajikistan national bank",
+    "nbt", "afghanistan central bank", "dab", "iran central bank", "cbi", "iraq central bank", "cbi",
+    "syria central bank", "cbs", "lebanon central bank", "bdl", "jordan central bank", "cbj",
+    "israel central bank", "boi", "palestine monetary authority", "pma", "egypt central bank", "cbe",
+    "libya central bank", "cbl", "tunisia central bank", "bct", "algeria central bank", "baa",
+    "morocco central bank", "bam", "mauritania central bank", "bcm", "senegal central bank", "bceao",
+    "mali central bank", "bceao", "niger central bank", "bceao", "burkina faso central bank", "bceao",
+    "togo central bank", "bceao", "benin central bank", "bceao", "ivory coast central bank", "bceao",
+    "guinea-bissau central bank", "bceao", "cape verde central bank", "bccv", "gambia central bank",
+    "cbg", "guinea central bank", "bcrg", "sierra leone central bank", "bsl", "liberia central bank",
+    "cbl", "ghana central bank", "bog", "nigeria central bank", "cbn", "cameroon central bank", "beac",
+    "central african republic central bank", "beac", "chad central bank", "beac", "congo republic central bank",
+    "beac", "equatorial guinea central bank", "beac", "gabon central bank", "beac",
+    "democratic republic of congo central bank", "bcc", "burundi central bank", "brb", "rwanda central bank",
+    "bnk", "uganda central bank", "bou", "kenya central bank", "cbk", "tanzania central bank", "bot",
+    "zambia central bank", "boz", "malawi central bank", "rbm", "mozambique central bank", "bdm",
+    "zimbabwe central bank", "rbz", "botswana central bank", "bob", "namibia central bank", "bon",
+    "south africa reserve bank", "sarb", "lesotho central bank", "cbl", "eswatini central bank", "cbs",
+    "angola national bank", "bna", "sao tome and principe central bank", "bcstp", "comoros central bank",
+    "bcc", "madagascar central bank", "bfm", "mauritius central bank", "bom", "seychelles central bank",
+    "cbs", "djibouti central bank", "cbd", "eritrea central bank", "boe", "ethiopia central bank",
+    "nbe", "somalia central bank", "cbs", "sudan central bank", "cbs", "south sudan central bank",
+    "cbss", "cuba central bank", "bcc", "dominican republic central bank", "bancentral",
+    "haiti central bank", "brh", "jamaica central bank", "boj", "trinidad and tobago central bank",
+    "cbtt", "barbados central bank", "cbb", "bahamas central bank", "cbb", "guyana central bank",
+    "bog", "suriname central bank", "cbs", "french guiana central bank", "iedom",
+    "guadeloupe central bank", "iedom", "martinique central bank", "iedom", "saint pierre and miquelon central bank",
+    "iedom", "saint barthélemy central bank", "iedom", "saint martin central bank", "iedom",
+    "aruba central bank", "cba", "curaçao and sint maarten central bank", "cbcsm",
+    "bolivia central bank", "bcb", "colombia central bank", "bancorep", "ecuador central bank",
+    "bce", "peru central bank", "bcrp", "venezuela central bank", "bcv", "argentina central bank",
+    "bcra", "brazil central bank", "bcb", "chile central bank", "bcch", "paraguay central bank",
+    "bcp", "uruguay central bank", "bcu", "australia reserve bank", "rba", "new zealand reserve bank",
+    "rbnz", "fiji reserve bank", "rbf", "papua new guinea central bank", "bpng",
+    "solomon islands central bank", "cbsi", "vanuatu reserve bank", "rbv", "new caledonia central bank",
     "ieb", "french polynesia central bank", "iep", "samoa central bank", "cbs", "tonga reserve bank",
     "rbt", "tuvalu central bank", "cbt", "kiribati central bank", "cbsk", "nauru central bank",
     "cbn", "marshall islands central bank", "cbi", "micronesia central bank", "cbm",
@@ -428,7 +523,15 @@ CUSTOM_STOP_WORDS = set([
     "nrb", "bhutan central bank", "rbn", "maldives central bank", "mma", "mongolia central bank",
     "bom", "taiwan central bank", "cbc", "hong kong monetary authority", "hkma", "macau monetary authority",
     "amma", "south korea central bank", "bok", "north korea central bank", "cbprk", "japan central bank",
-    "boj", "china central bank", "pboc"
+    "boj", "china central bank", "pboc", "mongolia central bank", "bom", "myanmar central bank", "cbm",
+    "laos central bank", "bol", "cambodia national bank", "nbc", "vietnam central bank", "sbv",
+    "thailand central bank", "bot", "philippines central bank", "bsp", "indonesia central bank", "bi",
+    "malaysia central bank", "bnm", "singapore monetary authority", "mas", "brunei central bank", "ambd",
+    "east timor central bank", "bctl", "bangladesh central bank", "bb", "pakistan central bank", "sbp",
+    "sri lanka central bank", "cbsl", "nepal central bank", "nrb", "bhutan central bank", "rbn",
+    "maldives central bank", "mma", "mongolia central bank", "bom", "taiwan central bank", "cbc",
+    "hong kong monetary authority", "hkma", "macau monetary authority", "amma", "south korea central bank",
+    "bok", "north korea central bank", "cbprk", "japan central bank", "boj", "china central bank", "pboc"
 ])
 
 
@@ -797,61 +900,19 @@ def semantic_score(resume_text, jd_text, years_exp):
 
 
 # --- Email Generation Function ---
-def create_mailto_link(recipient_email, candidate_name, job_title="Job Opportunity", sender_name="Recruiting Team", ai_suggestion=""):
+def create_mailto_link(recipient_email, candidate_name, job_title="Job Opportunity", sender_name="Recruiting Team"):
     """
     Generates a mailto: link with pre-filled subject and body for inviting a candidate.
-    Includes AI suggestion for top candidate.
     """
     subject = urllib.parse.quote(f"Invitation for Interview - {job_title} - {candidate_name}")
-    
-    # Professional email body
-    body = f"""Dear {candidate_name},
+    body = urllib.parse.quote(f"""Dear {candidate_name},
 
-We hope this email finds you well.
-
-We are pleased to inform you that your application for the {job_title} position has been reviewed, and we are very impressed with your profile.
-
-We would like to invite you for an interview to discuss your experience and qualifications further. Please let us know your availability in the coming days.
+We were very impressed with your profile and would like to invite you for an interview for the {job_title} position.
 
 Best regards,
 
-The {sender_name}"""
-
-    if ai_suggestion:
-        # Append AI suggestion for internal reference or highly personalized outreach (optional, use with caution)
-        # For a professional external email, it's usually better to keep AI suggestions internal.
-        # This is structured to be internal-facing for the recruiter, not sent to the candidate.
-        pass # We will use AI suggestion directly in the Streamlit UI, not in the mailto body for candidates.
-
-    return f"mailto:{recipient_email}?subject={subject}&body={urllib.parse.quote(body)}"
-
-# --- Bulk Email Generation Function ---
-def create_bulk_mailto_link(candidate_emails, job_title="Job Opportunity", sender_name="Recruiting Team"):
-    """
-    Generates a mailto: link for sending bulk emails to multiple candidates.
-    """
-    if not candidate_emails:
-        return None
-    
-    # Join all emails with a comma
-    recipients = ",".join(candidate_emails)
-    
-    subject = urllib.parse.quote(f"Invitation for Interview - {job_title}")
-    
-    body = f"""Dear Candidate,
-
-We hope this email finds you well.
-
-We are pleased to inform you that your application for the {job_title} position has been reviewed, and we are very impressed with your profile.
-
-We would like to invite you for an interview to discuss your experience and qualifications further. Please let us know your availability in the coming days.
-
-Best regards,
-
-The {sender_name}"""
-
-    return f"mailto:{recipients}?subject={subject}&body={urllib.parse.quote(body)}"
-
+The {sender_name}""")
+    return f"mailto:{recipient_email}?subject={subject}&body={body}"
 
 # --- Streamlit UI ---
 st.set_page_config(layout="wide", page_title="ScreenerPro - AI Resume Screener", page_icon="🧠")
@@ -861,51 +922,18 @@ st.title("🧠 ScreenerPro – AI-Powered Resume Screener")
 st.markdown("## ⚙️ Define Job Requirements & Screening Criteria")
 col1, col2 = st.columns([2, 1])
 
-# Directory for pre-loaded JDs
-JD_DATA_DIR = "data" # Ensure you have a 'data' folder in your project root with JD .txt files
-
-# Try to list pre-loaded JDs
-job_role_files = {}
-try:
-    if os.path.exists(JD_DATA_DIR) and os.path.isdir(JD_DATA_DIR):
-        for filename in os.listdir(JD_DATA_DIR):
-            if filename.endswith(".txt"):
-                # Use filename without extension as display name
-                display_name = os.path.splitext(filename)[0].replace('_', ' ').title()
-                job_role_files[display_name] = os.path.join(JD_DATA_DIR, filename)
-    else:
-        st.warning(f"'{JD_DATA_DIR}' directory not found. Pre-loaded JDs will not be available. Please create a 'data' folder and place your JD .txt files inside it.")
-except Exception as e:
-    st.error(f"Error listing JD files: {e}")
-
-job_roles_options = ["Upload New JD"] + sorted(list(job_role_files.keys()))
-selected_jd_option = st.selectbox("Select a Pre-Loaded Job Role or Upload Your Own", job_roles_options, key="jd_option_select")
-
-jd_text = ""
-jd_file_uploader = None
-
-if selected_jd_option == "Upload New JD":
-    jd_file_uploader = st.file_uploader("Upload Job Description (TXT or PDF)", type=["txt", "pdf"], help="Upload a .txt or .pdf file containing the job description.")
-    if jd_file_uploader:
-        if jd_file_uploader.type == "application/pdf":
-            jd_text = extract_text_from_pdf(jd_file_uploader)
-        else: # text file
-            jd_text = jd_file_uploader.read().decode("utf-8")
-else:
-    # Load selected pre-loaded JD
-    jd_filepath = job_role_files.get(selected_jd_option)
-    if jd_filepath and os.path.exists(jd_filepath):
-        try:
-            with open(jd_filepath, 'r', encoding='utf-8') as f:
-                jd_text = f.read()
-            st.success(f"Loaded '{selected_jd_option}' Job Description.")
-        except Exception as e:
-            st.error(f"Error reading pre-loaded JD '{selected_jd_option}': {e}")
-    else:
-        st.error(f"Pre-loaded JD file for '{selected_jd_option}' not found or accessible.")
-
-
 with col1:
+    jd_text = ""
+    # Removed job_roles dictionary and selectbox for pre-loaded JDs
+    # as per your request to streamline the workflow to only use uploaded JD.
+
+    jd_file = st.file_uploader("Upload Job Description (TXT or PDF)", type=["txt", "pdf"], help="Upload a .txt or .pdf file containing the job description.")
+    if jd_file:
+        if jd_file.type == "application/pdf":
+            jd_text = extract_text_from_pdf(jd_file)
+        else: # text file
+            jd_text = jd_file.read().decode("utf-8")
+    
     if jd_text:
         with st.expander("📝 View Loaded Job Description"):
             st.text_area("Job Description Content", jd_text, height=200, disabled=True, label_visibility="collapsed")
@@ -1081,20 +1109,14 @@ if jd_text and resume_files:
         top_candidate = df.iloc[0]
         st.markdown(f"### **{top_candidate['Candidate Name']}**")
         st.markdown(f"**Score:** {top_candidate['Score (%)']:.2f}% | **Experience:** {top_candidate['Years Experience']:.1f} years | **Semantic Similarity:** {top_candidate['Semantic Similarity']:.2f}")
+        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}") # This now includes the growth section
         
-        # Use the full AI Suggestion here
-        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}") 
-        
-        # Determine job title for email
+        # The jd_option is not used anymore as we removed the selectbox.
+        # Defaulting job_title for mailto link
         job_title_for_email = "Job Opportunity" 
-        if selected_jd_option != "Upload New JD":
-            job_title_for_email = selected_jd_option # Use selected JD name
-        elif jd_file_uploader and jd_file_uploader.name:
-            # Try to infer from uploaded file name
-            job_title_for_email = os.path.splitext(jd_file_uploader.name)[0].replace('_', ' ').title()
-        elif jd_text: # Fallback to first line of JD text
+        if jd_text: # Try to infer a title from the JD text if available
             first_line = jd_text.strip().split('\n')[0]
-            if len(first_line) < 100:
+            if len(first_line) < 100: # Avoid very long lines
                 job_title_for_email = first_line.title()
 
         if top_candidate['Email'] != "Not Found":
@@ -1118,7 +1140,7 @@ if jd_text and resume_files:
     st.markdown("## 🌟 Shortlisted Candidates Overview")
     st.caption("Candidates meeting your score and experience criteria, with their AI-generated summaries.")
 
-    shortlisted_candidates = df[(df['Score (%)'] >= cutoff) & (df['Years Experience'] >= min_experience)].copy() # Use .copy() to avoid SettingWithCopyWarning
+    shortlisted_candidates = df[(df['Score (%)'] >= cutoff) & (df['Years Experience'] >= min_experience)]
 
     if not shortlisted_candidates.empty:
         st.success(f"**{len(shortlisted_candidates)}** candidate(s) meet your specified criteria (Score ≥ {cutoff}%, Experience ≥ {min_experience} years).")
@@ -1163,18 +1185,6 @@ if jd_text and resume_files:
                 )
             }
         )
-
-        # --- Email All Shortlisted Candidates Button ---
-        shortlisted_emails = [email for email in shortlisted_candidates['Email'] if email != "Not Found"]
-        if shortlisted_emails:
-            bulk_mailto_link = create_bulk_mailto_link(
-                candidate_emails=shortlisted_emails,
-                job_title=job_title_for_email # Use the determined job title
-            )
-            st.markdown(f'<a href="{bulk_mailto_link}" target="_blank"><button style="background-color:#4CAF50;color:white;border:none;padding:10px 20px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;border-radius:8px;">📧 Email All Shortlisted Candidates ({len(shortlisted_emails)})</button></a>', unsafe_allow_html=True)
-        else:
-            st.info("No email addresses found for shortlisted candidates to send bulk invites.")
-
         st.info("For individual detailed AI assessments and action steps, please refer to the table above or the Comprehensive Candidate Results Table.")
 
     else:
