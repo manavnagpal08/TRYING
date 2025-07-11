@@ -137,9 +137,358 @@ CUSTOM_STOP_WORDS = set([
     "gcp-pmd", "gcp-pma", "gcp-pmc", "gcp-pmg", "cisco", "juniper", "red", "hat", "rhcsa",
     "rhce", "vmware", "vcpa", "vcpd", "vcpi", "vcpe", "vcpx", "citrix", "cc-v", "cc-p",
     "cc-e", "cc-m", "cc-s", "cc-x", "palo", "alto", "pcnsa", "pcnse", "fortinet", "fcsa",
-    "fcsp", "fcc", "fcnsp", "fct", "fcp", "fcs", "fce", "fcn", "fcnp", "fcnse"
+    "fcsp", "fcc", "fcnsp", "fct", "fcp", "fcs", "fce", "fcn", "fcnp", "fcnse",
+    # General words that might appear in "skills" section but aren't actual skills
+    "skills", "skill", "improve", "improving", "ability", "abilities", "knowledge", "proficient",
+    "expertise", "experience", "experienced", "background", "capabilities", "competencies",
+    "competency", "develop", "developing", "developed", "learn", "learning", "mastery",
+    "understanding", "areas", "area", "technical", "soft", "communication", "leadership",
+    "problem-solving", "critical-thinking", "adaptability", "creativity", "teamwork", "collaboration",
+    "interpersonal", "organizational", "management", "strategic", "tactical", "operational",
+    "excellent", "strong", "good", "basic", "intermediate", "advanced", "proficient",
+    "demonstrated", "proven", "track record", "results", "driven", "achievements", "accomplishments",
+    "responsibilities", "duties", "tasks", "roles", "role", "key", "summary", "profile",
+    "objective", "education", "certifications", "awards", "honors", "publications", "interests",
+    "references", "portfolio", "contact", "phone", "email", "linkedin", "github", "website",
+    "address", "city", "state", "zip", "country", "national", "international", "global",
+    "remote", "hybrid", "onsite", "full-time", "part-time", "contract", "freelance", "internship",
+    "volunteer", "education", "degree", "bachelor", "master", "phd", "university", "college",
+    "institute", "school", "major", "minor", "gpa", "course", "courses", "class", "classes",
+    "project", "projects", "thesis", "dissertation", "research", "paper", "papers", "journal",
+    "journals", "conference", "conferences", "presentation", "presentations", "workshop", "workshops",
+    "seminar", "seminars", "training", "trainings", "certification", "certifications", "license",
+    "licenses", "award", "awards", "honor", "honors", "distinction", "distinctions", "scholarship",
+    "scholarships", "fellowship", "fellowships", "grant", "grants", "patent", "patents",
+    "publication", "publications", "article", "articles", "book", "books", "chapter", "chapters",
+    "report", "reports", "manual", "manuals", "guide", "guides", "documentation", "documentations",
+    "technical report", "white paper", "case study", "case studies", "solution architect",
+    "data scientist", "machine learning engineer", "software developer", "devops engineer",
+    "cloud engineer", "cybersecurity analyst", "product manager", "project manager",
+    "business analyst", "marketing manager", "sales manager", "hr manager", "financial analyst",
+    "accountant", "auditor", "consultant", "director", "manager", "lead", "senior", "junior",
+    "associate", "specialist", "coordinator", "assistant", "intern", "engineer", "analyst",
+    "architect", "strategist", "expert", "professional", "consultant", "advisor", "officer",
+    "executive", "president", "vice president", "ceo", "cto", "cfo", "coo", "chief", "head",
+    "group", "division", "department", "unit", "section", "team", "office", "company", "corporation",
+    "inc", "ltd", "llc", "corp", "group", "holdings", "solutions", "services", "technologies",
+    "systems", "consulting", "advisory", "management", "financial", "digital", "global",
+    "international", "national", "regional", "local", "public", "private", "government",
+    "non-profit", "startup", "mid-size", "enterprise", "fortune", "global", "innovative",
+    "cutting-edge", "leading", "pioneering", "transformative", "disruptive", "scalable",
+    "robust", "reliable", "secure", "efficient", "effective", "optimized", "automated",
+    "integrated", "seamless", "user-friendly", "intuitive", "responsive", "dynamic",
+    "interactive", "engaging", "compelling", "impactful", "sustainable", "ethical",
+    "compliant", "governance", "risk", "compliance", "regulatory", "standard", "standards",
+    "best practices", "methodology", "methodologies", "process", "processes", "procedure",
+    "procedures", "guideline", "guidelines", "framework", "frameworks", "tool", "tools",
+    "technology", "technologies", "platform", "platforms", "solution", "solutions",
+    "system", "systems", "architecture", "design", "development", "implementation",
+    "deployment", "maintenance", "support", "operations", "monitoring", "analysis",
+    "reporting", "visualization", "dashboard", "dashboards", "metrics", "kpis", "performance",
+    "optimization", "automation", "integration", "migration", "transformation", "upgrade",
+    "update", "patch", "patches", "troubleshooting", "debugging", "testing", "quality",
+    "assurance", "control", "auditing", "compliance", "security", "privacy", "data",
+    "information", "analytics", "intelligence", "insight", "insights", "strategy",
+    "planning", "execution", "management", "leadership", "mentoring", "coaching",
+    "training", "development", "recruitment", "hiring", "onboarding", "retention",
+    "employee", "engagement", "relations", "compensation", "benefits", "payroll",
+    "hr", "human resources", "talent acquisition", "talent management", "workforce",
+    "diversity", "inclusion", "equity", "belonging", "csr", "sustainability", "environmental",
+    "social", "governance", "ethics", "integrity", "professionalism", "communication",
+    "presentation", "negotiation", "collaboration", "teamwork", "interpersonal",
+    "problem solving", "critical thinking", "analytical", "creative", "innovative",
+    "adaptable", "flexible", "resilient", "organized", "detail-oriented", "proactive",
+    "self-starter", "independent", "results-driven", "client-facing", "stakeholder management",
+    "vendor management", "budget management", "cost reduction", "process improvement",
+    "standardization", "quality management", "project management", "program management",
+    "portfolio management", "agile", "scrum", "kanban", "waterfall", "lean", "six sigma",
+    "pmp", "prince2", "itil", "cobit", "cism", "cissp", "ceh", "security+", "network+",
+    "a+", "linux+", "ccna", "ccnp", "ccie", "aws", "azure", "gcp", "certified",
+    "developer", "architect", "sysops", "administrator", "specialty", "professional",
+    "expert", "master", "principal", "distinguished", "fellow", "senior staff", "staff",
+    "junior staff", "associate staff", "intern", "co-op", "trainee", "apprentice",
+    "volunteer", "pro-bono", "freelance", "contract", "temp", "full-time", "part-time",
+    "casual", "seasonal", "gig", "remote", "hybrid", "onsite", "in-office", "field-based",
+    "travel", "relocation", "visa sponsorship", "eligible to work", "right to work",
+    "driver's license", "car", "own transport", "flexible hours", "on-call", "shift work",
+    "overtime", "weekend work", "public holidays", "bank holidays", "paid leave",
+    "unpaid leave", "sick leave", "maternity leave", "paternity leave", "parental leave",
+    "bereavement leave", "sabbatical", "retirement", "pension", "superannuation",
+    "health insurance", "dental insurance", "vision insurance", "life insurance",
+    "disability insurance", "critical illness", "employee assistance program", "eap",
+    "wellness program", "gym membership", "subsidized meals", "company car", "mobile phone",
+    "laptop", "home office allowance", "training budget", "professional development",
+    "mentorship", "coaching", "career progression", "internal mobility", "job rotation",
+    "secondment", "tuition reimbursement", "education assistance", "student loan repayment",
+    "childcare vouchers", "cycle to work", "share options", "stock options", "equity",
+    "bonus", "commission", "profit share", "salary", "wage", "remuneration", "package",
+    "compensation", "benefits", "perks", "allowances", "expenses", "reimbursement",
+    "tax-efficient", "salary sacrifice", "pension contributions", "medical aid",
+    "401k", "403b", "457", "ira", "roth ira", "sep ira", "simple ira", "espp", "rsu",
+    "ltdi", "stdi", "adr", "arbitration", "mediation", "grievance", "disciplinary",
+    "code of conduct", "ethics policy", "confidentiality agreement", "nda", "non-compete",
+    "non-solicitation", "ip assignment", "offer letter", "contract of employment",
+    "employee handbook", "company policy", "procedure manual", "compliance training",
+    "health and safety", "hse", "ohs", "osh", "ergonomics", "fire safety", "first aid",
+    "incident reporting", "accident investigation", "risk assessment", "hazard identification",
+    "safe work procedures", "emergency preparedness", "business continuity", "disaster recovery",
+    "crisis management", "crisis communication", "public relations", "media relations",
+    "investor relations", "shareholder relations", "government relations", "lobbying",
+    "community relations", "corporate social responsibility", "csr report", "sustainability report",
+    "environmental impact", "carbon footprint", "waste management", "recycling", "renewable energy",
+    "green initiatives", "eco-friendly", "fair trade", "ethical sourcing", "supply chain ethics",
+    "human rights", "labor practices", "child labor", "forced labor", "modern slavery",
+    "equal opportunity", "affirmative action", "diversity and inclusion", "unconscious bias",
+    "harassment prevention", "discrimination prevention", "grievance procedure", "whistleblowing",
+    "internal audit", "external audit", "financial audit", "operational audit", "compliance audit",
+    "it audit", "security audit", "quality audit", "environmental audit", "social audit",
+    "due diligence", "mergers and acquisitions", "m&a", "divestitures", "joint ventures",
+    "strategic alliances", "partnerships", "outsourcing", "insourcing", "offshoring",
+    "nearshoring", "reshoring", "vendor management", "supplier relationship management",
+    "contract negotiation", "contract management", "procurement", "purchasing", "sourcing",
+    "logistics", "supply chain", "inventory management", "warehouse management",
+    "transportation management", "fleet management", "route optimization", "demand planning",
+    "forecasting", "production planning", "manufacturing execution system", "mes",
+    "enterprise resource planning", "erp", "customer relationship management", "crm",
+    "supply chain management", "scm", "human capital management", "hcm", "financial management",
+    "accounting software", "payroll software", "hr software", "crm software", "erp software",
+    "project management software", "collaboration tools", "communication tools",
+    "video conferencing", "web conferencing", "document management", "content management",
+    "knowledge management", "business intelligence", "bi", "data warehousing", "data lakes",
+    "data marts", "etl", "data integration", "data governance", "data quality", "data migration",
+    "data modeling", "data architecture", "database administration", "dba", "sql", "nosql",
+    "data science", "machine learning", "deep learning", "artificial intelligence", "ai",
+    "natural language processing", "nlp", "computer vision", "cv", "predictive analytics",
+    "prescriptive analytics", "descriptive analytics", "statistical analysis", "data mining",
+    "big data", "hadoop", "spark", "kafka", "tableau", "power bi", "qlikview", "excel",
+    "r", "python", "sas", "spss", "matlab", "stata", "azure machine learning",
+    "aws sagemaker", "google ai platform", "tensorflow", "pytorch", "keras", "scikit-learn",
+    "xgboost", "lightgbm", "catboost", "r studio", "jupyter", "databricks", "snowflake",
+    "redshift", "synapse", "bigquery", "azure data lake", "aws s3", "google cloud storage",
+    "relational database", "mongodb", "cassandra", "redis", "elasticsearch", "kafka streams",
+    "apache flink", "apache spark", "apache kafka", "apache hadoop", "data bricks", "dbt",
+    "airflow", "luigi", "prefect", "mlflow", "kubeflow", "docker", "kubernetes", "ansible",
+    "terraform", "jenkins", "gitlab ci/cd", "github actions", "azure devops", "aws codepipeline",
+    "google cloud build", "ci/cd", "devops", "site reliability engineering", "sre",
+    "infrastructure as code", "iac", "cloud computing", "aws", "azure", "gcp", "private cloud",
+    "hybrid cloud", "multi-cloud", "serverless", "lambda", "functions", "cloud functions",
+    "api gateway", "microservices", "service mesh", "istio", "linkerd", "grpc", "restful apis",
+    "soap", "queues", "messaging", "rabbitmq", "activemq", "apache kafka", "azure service bus",
+    "aws sqs", "aws sns", "google cloud pub/sub", "version control", "git", "github", "gitlab",
+    "bitbucket", "svn", "mercurial", "jiras", "confluence", "slack", "microsoft teams",
+    "zoom", "google meet", "webex", "skype", "email", "outlook", "gmail", "calendaring",
+    "scheduling", "microsoft office", "google workspace", "g suite", "microsoft 365",
+    "visio", "draw.io", "lucidchart", "powerpoint", "keynote", "google slides",
+    "word", "google docs", "excel", "google sheets", "project management", "agile tools",
+    "jira", "trello", "asana", "monday.com", "smartsheet", "microsoft project",
+    "html", "css", "javascript", "typescript", "react", "angular", "vue.js", "svelte",
+    "jquery", "bootstrap", "tailwind css", "sass", "less", "webpack", "babel", "npm", "yarn",
+    "node.js", "express.js", "python", "django", "flask", "fastapi", "java", "spring boot",
+    "c#", ".net core", "php", "laravel", "symphony", "ruby", "rails", "go", "golang",
+    "swift", "kotlin", "scala", "clojure", "rust", "frontend", "backend", "fullstack",
+    "web development", "mobile development", "ios", "android", "react native", "flutter",
+    "xamarin", "native script", "ionic", "progressive web apps", "pwa", "single page application",
+    "spa", "rest api design", "graphql api", "micro-frontend", "server-side rendering",
+    "client-side rendering", "state management", "redux", "mobx", "vuex", "ngrx",
+    "context api", "web sockets", "real-time applications", "authentication", "authorization",
+    "oauth", "jwt", "openid connect", "saml", "active directory", "ldap", "okta", "auth0",
+    "keycloak", "security testing", "penetration testing", "vulnerability scanning",
+    "static code analysis", "dynamic code analysis", "security awareness", "threat modeling",
+    "incident response", "disaster recovery", "business continuity", "bcp", "drp",
+    "gdpr", "hipaa", "ccpa", "soc 2", "iso 27001", "nist", "pci dss", "cybersecurity frameworks",
+    "firewalls", "ids", "ips", "vpn", "endpoint protection", "antivirus", "anti-malware",
+    "siem", "soc", "network security", "cloud security", "application security",
+    "data security", "identity and access management", "iam", "privileged access management", "pam",
+    "encryption", "decryption", "hashing", "digital signatures", "ssl/tls", "pkis",
+    "cryptography", "blockchain", "distributed ledger technology", "dlt", "smart contracts",
+    "decentralized applications", "dapps", "cryptocurrencies", "nfts", "web3", "metaverse",
+    "augmented reality", "ar", "virtual reality", "vr", "mixed reality", "mr",
+    "internet of things", "iot", "edge computing", "quantum computing", "robotics",
+    "automation", "rpa", "robotic process automation", "chatbots", "virtual assistants",
+    "natural language understanding", "nlu", "natural language generation", "nlg",
+    "speech recognition", "text-to-speech", "computer vision", "image processing",
+    "video analytics", "facial recognition", "object detection", "image classification",
+    "sentiment analysis", "entity recognition", "topic modeling", "summarization",
+    "translation", "recommendation systems", "recommender systems", "fraud detection",
+    "anomaly detection", "predictive maintenance", "demand forecasting", "supply chain optimization",
+    "resource allocation", "scheduling", "route optimization", "pricing optimization",
+    "customer segmentation", "churn prediction", "lead scoring", "credit scoring",
+    "risk assessment", "portfolio optimization", "algorithmic trading", "high-frequency trading",
+    "quantitative analysis", "financial modeling", "econometrics", "statistical modeling",
+    "actuarial science", "biostatistics", "epidemiology", "clinical trials", "pharmacology",
+    "genomics", "bioinformatics", "biotechnology", "life sciences", "healthcare", "pharma",
+    "medical devices", "diagnostics", "hospitals", "clinics", "telehealth", "ehealth",
+    "fintech", "insurtech", "regtech", "edtech", "proptech", "legaltech", "agritech",
+    "foodtech", "traveltech", "gaming", "esports", "media", "entertainment", "publishing",
+    "advertising", "marketing", "digital marketing", "seo", "sem", "social media marketing",
+    "content marketing", "email marketing", "affiliate marketing", "influencer marketing",
+    "event marketing", "public relations", "brand management", "product management",
+    "product development", "product lifecycle management", "plm", "go-to-market strategy",
+    "market research", "competitor analysis", "swot analysis", "pestel analysis",
+    "customer journey", "user experience", "ux", "user interface", "ui", "ux design",
+    "ui design", "user research", "usability testing", "wireframing", "prototyping",
+    "user flows", "information architecture", "interaction design", "visual design",
+    "motion graphics", "graphic design", "web design", "mobile design", "branding",
+    "typography", "color theory", "layout", "composition", "illustration", "photography",
+    "video production", "animation", "audio production", "sound design", "music production",
+    "voice acting", "scriptwriting", "storytelling", "copywriting", "editing", "proofreading",
+    "localization", "internationalization", "translation", "transcription", "dubbing",
+    "subtitling", "interpreting", "customer service", "customer support", "technical support",
+    "help desk", "call center", "field service", "client relations", "account management",
+    "sales", "business development", "lead generation", "cold calling", "sales presentations",
+    "negotiation", "closing sales", "crm software", "salesforce", "hubspot", "microsoft dynamics",
+    "sap crm", "oracle crm", "zendesk sales", "freshsales", "pipedrive", "monday sales crm",
+    "zoho crm", "insightly", "agile crm", "bitrix24", "capsule crm", "teamleader",
+    "v-tiger", "microsoft access", "filemaker", "tableau", "powerbi", "qlik", "domo",
+    "looker", "microstrategy", "cognos", "sas visual analytics", "spotfire", "datawrapper",
+    "infogram", "chartio", "metabase", "redash", "supersets", "dash", "bokeh", "plotly",
+    "matplotlib", "seaborn", "ggplot2", "d3.js", "chart.js", "highcharts", "echarts",
+    "google charts", "microsoft charts", "openpyxl", "pandas", "numpy", "scipy", "statsmodels",
+    "numba", "cython", "dask", "modin", "vaex", "polars", "koalas", "pyspark", "sparklyr",
+    "datatable", "fastai", "hugging face", "transformers", "pytorch lightning", "keras tuner",
+    "mlflow", "neptune.ai", "weights & biases", "comet ml", "tensorboard", "streamlit",
+    "dash", "voila", "panel", "gradio", "shinylive", "fastpages", "mkdocs", "sphinx",
+    "swagger", "openapi", "postman", "insomnia", "soapui", "jmeter", "locust", "k6",
+    "blazemeter", "gatling", "artillery", "cypress", "selenium", "playwright", "puppeteer",
+    "jest", "mocha", "chai", "jasmine", "karma", "enzyme", "react testing library",
+    "vue test utils", "angular testing", "j-unit", "n-unit", "x-unit", "pytest", "unittest",
+    "doctest", "robot framework", "cucumber", "gherkin", "specflow", "behave", "lettuce",
+    "gauge", "testrail", "zephyr", "qtest", "xray", "hp alm", "micro focus alm",
+    "azure test plans", "aws device farm", "google firebase test lab", "browserstack",
+    "sauce labs", "lambdatest", "crossbrowsertesting", "applitools", "percy", "storybook",
+    "chromatic", "figma", "sketch", "adobe xd", "invision", "zeplin", "marvel app",
+    "framer", "principle", "abstract", "gitlfs", "sourcetree", "github desktop", "fork",
+    "sublime merge", "vscode git", "jetbrains git", "command line git", "github cli",
+    "gitlab cli", "azure cli", "aws cli", "gcloud cli", "kubectl", "helm", "terraform cli",
+    "ansible cli", "packer", "vagrant", "virtualbox", "vmware workstation", "parallels",
+    "hyper-v", "proxmox", "kvm", "xen", "openstack", "cloudstack", "eucalyptus", "bare metal",
+    "on-premise", "data center", "colo", "hosting", "managed services", "support services",
+    "professional services", "consulting services", "training services", "education services",
+    "certification services", "advisory services", "staff augmentation", "recruiting services",
+    "headhunting", "executive search", "contingency search", "retained search",
+    "hr consulting", "talent strategy", "workforce planning", "organizational development",
+    "change management", "leadership development", "performance management", "learning & development",
+    "employee relations", "industrial relations", "labor law", "employment law", "hr policies",
+    "hr procedures", "hr systems", "hr metrics", "hr analytics", "hr dashboards", "hr reporting",
+    "compliance management", "regulatory compliance", "audit readiness", "internal controls",
+    "sarbanes-oxley", "sox", "dodd-frank", "basel iii", "solvency ii", "ifrs", "gaap",
+    "financial reporting", "management accounting", "cost accounting", "budgeting",
+    "forecasting", "financial analysis", "variance analysis", "cash flow management",
+    "treasury management", "risk management", "credit risk", "market risk", "operational risk",
+    "liquidity risk", "cyber risk", "strategic risk", "reputational risk", "legal risk",
+    "compliance risk", "enterprise risk management", "erm", "internal audit", "external audit",
+    "fraud examination", "forensic accounting", "tax planning", "tax compliance",
+    "transfer pricing", "international taxation", "investment analysis", "portfolio management",
+    "asset management", "wealth management", "financial planning", "retirement planning",
+    "estate planning", "insurance sales", "underwriting", "claims management", "actuarial science",
+    "p&c insurance", "life insurance", "health insurance", "reinsurance", "brokerage",
+    "financial markets", "equities", "fixed income", "derivatives", "foreign exchange",
+    "commodities", "futures", "options", "swaps", "bonds", "stocks", "indices", "etfs",
+    "mutual funds", "hedge funds", "private equity", "venture capital", "angel investing",
+    "crowdfunding", "m&a advisory", "corporate finance", "project finance", "structured finance",
+    "debt financing", "equity financing", "valuation", "due diligence", "deal sourcing",
+    "deal execution", "post-merger integration", "post-acquisition integration",
+    "divestment", "carve-out", "spin-off", "initial public offering", "ipo", "secondary offering",
+    "bond issuance", "debt issuance", "syndicated loans", "leveraged buyouts", "lbo",
+    "management buyouts", "mbo", "restructuring", "bankruptcy", "insolvency", "distressed assets",
+    "workout", "debt recovery", "credit analysis", "loan origination", "loan servicing",
+    "collection", "asset-backed securities", "mortgage-backed securities", "collateralized debt obligations",
+    "cdo", "securitization", "financial engineering", "quantitative finance", "model validation",
+    "stress testing", "scenario analysis", "value-at-risk", "var", "expected shortfall", "es",
+    "monte carlo simulation", "time series analysis", "regression analysis", "machine learning in finance",
+    "algorithmic trading", "high-frequency trading", "fintech solutions", "blockchain in finance",
+    "robo-advisors", "peer-to-peer lending", "p2p", "digital payments", "mobile payments",
+    "cryptocurrency trading", "custody services", "exchange platforms", "defi", "decentralized finance",
+    "nft marketplaces", "tokenomics", "smart contract auditing", "cybersecurity in finance",
+    "fraud detection", "anti-money laundering", "aml", "know your customer", "kyc",
+    "sanctions screening", "transaction monitoring", "regulatory reporting", "basel", "dodd-frank",
+    "solvency", "mifid", "emirs", "fdic", "fca", "sec", "finra", "esma", "ecb", "federal reserve",
+    "monetary authority of singapore", "mas", "hong kong monetary authority", "hkma",
+    "people's bank of china", "pboc", "rbi", "bank of england", "boe", "bank of japan", "boj",
+    "bank of canada", "boc", "european central bank", "ecb", "swiss national bank", "snb",
+    "australian treasury", "reserve bank of australia", "rba", "new zealand treasury",
+    "reserve bank of new zealand", "rbnz", "securities and exchange board of india", "sebi",
+    "china securities regulatory commission", "csrc", "japan financial services agency", "jfsa",
+    "south korea financial services commission", "fsc", "brazil central bank", "bcb",
+    "mexico central bank", "banxico", "south africa reserve bank", "sarb", "nigeria central bank",
+    "cbn", "uae central bank", "cbuae", "saudi central bank", "sacc", "qatar central bank", "qcb",
+    "egypt central bank", "cbe", "turkey central bank", "cbrt", "russia central bank", "cbrf",
+    "poland central bank", "nbp", "czech national bank", "cnb", "hungary central bank", "mnb",
+    "romania national bank", "bnrx", "bulgaria national bank", "bnb", "greece central bank", "bog",
+    "portugal central bank", "bp", "ireland central bank", "cbi", "belgium national bank", "nbb",
+    "netherlands central bank", "dnb", "austria central bank", "oenb", "finland central bank", "bof",
+    "sweden central bank", "riksbank", "norway central bank", "norges bank", "denmark central bank",
+    "dnb", "iceland central bank", "cbis", "greenland central bank", "gl", "faroes central bank",
+    "fb", "malta central bank", "cbm", "cyprus central bank", "cbc", "luxembourg central bank", "bcl",
+    "liechtenstein central bank", "fma", "monaco central bank", "bdm", "san marino central bank",
+    "bcs", "vatican city central bank", "vcb", "andorra central bank", "anc", "kosovo central bank",
+    "cbk", "montenegro central bank", "cbcg", "albania central bank", "bsa", "macedonia central bank",
+    "nbrm", "serbia national bank", "nbs", "bosnia and herzegovina central bank", "cbbh",
+    "croatia national bank", "hnb", "slovenia central bank", "bsi", "slovakia central bank", "nbs",
+    "estonia central bank", "eesti pank", "latvia central bank", "banka latvijas", "lithuania central bank",
+    "lietuvos bankas", "belarus central bank", "nbrb", "ukraine national bank", "nbu",
+    "moldova national bank", "bnm", "georgia national bank", "nbg", "armenia central bank", "cba",
+    "azerbaijan central bank", "cbar", "kazakhstan national bank", "nbk", "kyrgyzstan national bank",
+    "nbkr", "uzbekistan central bank", "cbu", "turkmenistan central bank", "cbt", "tajikistan national bank",
+    "nbt", "afghanistan central bank", "dab", "iran central bank", "cbi", "iraq central bank", "cbi",
+    "syria central bank", "cbs", "lebanon central bank", "bdl", "jordan central bank", "cbj",
+    "israel central bank", "boi", "palestine monetary authority", "pma", "egypt central bank", "cbe",
+    "libya central bank", "cbl", "tunisia central bank", "bct", "algeria central bank", "baa",
+    "morocco central bank", "bam", "mauritania central bank", "bcm", "senegal central bank", "bceao",
+    "mali central bank", "bceao", "niger central bank", "bceao", "burkina faso central bank", "bceao",
+    "togo central bank", "bceao", "benin central bank", "bceao", "ivory coast central bank", "bceao",
+    "guinea-bissau central bank", "bceao", "cape verde central bank", "bccv", "gambia central bank",
+    "cbg", "guinea central bank", "bcrg", "sierra leone central bank", "bsl", "liberia central bank",
+    "cbl", "ghana central bank", "bog", "nigeria central bank", "cbn", "cameroon central bank", "beac",
+    "central african republic central bank", "beac", "chad central bank", "beac", "congo republic central bank",
+    "beac", "equatorial guinea central bank", "beac", "gabon central bank", "beac",
+    "democratic republic of congo central bank", "bcc", "burundi central bank", "brb", "rwanda central bank",
+    "bnk", "uganda central bank", "bou", "kenya central bank", "cbk", "tanzania central bank", "bot",
+    "zambia central bank", "boz", "malawi central bank", "rbm", "mozambique central bank", "bdm",
+    "zimbabwe central bank", "rbz", "botswana central bank", "bob", "namibia central bank", "bon",
+    "south africa reserve bank", "sarb", "lesotho central bank", "cbl", "eswatini central bank", "cbs",
+    "angola national bank", "bna", "sao tome and principe central bank", "bcstp", "comoros central bank",
+    "bcc", "madagascar central bank", "bfm", "mauritius central bank", "bom", "seychelles central bank",
+    "cbs", "djibouti central bank", "cbd", "eritrea central bank", "boe", "ethiopia central bank",
+    "nbe", "somalia central bank", "cbs", "sudan central bank", "cbs", "south sudan central bank",
+    "cbss", "cuba central bank", "bcc", "dominican republic central bank", "bancentral",
+    "haiti central bank", "brh", "jamaica central bank", "boj", "trinidad and tobago central bank",
+    "cbtt", "barbados central bank", "cbb", "bahamas central bank", "cbb", "guyana central bank",
+    "bog", "suriname central bank", "cbs", "french guiana central bank", "iedom",
+    "guadeloupe central bank", "iedom", "martinique central bank", "iedom", "saint pierre and miquelon central bank",
+    "iedom", "saint barthélemy central bank", "iedom", "saint martin central bank", "iedom",
+    "aruba central bank", "cba", "curaçao and sint maarten central bank", "cbcsm",
+    "bolivia central bank", "bcb", "colombia central bank", "bancorep", "ecuador central bank",
+    "bce", "peru central bank", "bcrp", "venezuela central bank", "bcv", "argentina central bank",
+    "bcra", "brazil central bank", "bcb", "chile central bank", "bcch", "paraguay central bank",
+    "bcp", "uruguay central bank", "bcu", "australia reserve bank", "rba", "new zealand reserve bank",
+    "rbnz", "fiji reserve bank", "rbf", "papua new guinea central bank", "bpng",
+    "solomon islands central bank", "cbsi", "vanuatu reserve bank", "rbv", "new caledonia central bank",
+    "ieb", "french polynesia central bank", "iep", "samoa central bank", "cbs", "tonga reserve bank",
+    "rbt", "tuvalu central bank", "cbt", "kiribati central bank", "cbsk", "nauru central bank",
+    "cbn", "marshall islands central bank", "cbi", "micronesia central bank", "cbm",
+    "palau central bank", "cbp", "northern mariana islands central bank", "cbni", "guam central bank",
+    "cbg", "american samoa central bank", "cbas", "wallis and futuna central bank", "ieb",
+    "singapore monetary authority", "mas", "malaysia central bank", "bnm", "indonesia central bank",
+    "bi", "philippines central bank", "bsp", "thailand central bank", "bot", "vietnam central bank",
+    "sbv", "cambodia national bank", "nbc", "laos central bank", "bol", "myanmar central bank",
+    "cbm", "brunei central bank", "ambd", "east timor central bank", "bctl", "bangladesh central bank",
+    "bb", "pakistan central bank", "sbp", "sri lanka central bank", "cbsl", "nepal central bank",
+    "nrb", "bhutan central bank", "rbn", "maldives central bank", "mma", "mongolia central bank",
+    "bom", "taiwan central bank", "cbc", "hong kong monetary authority", "hkma", "macau monetary authority",
+    "amma", "south korea central bank", "bok", "north korea central bank", "cbprk", "japan central bank",
+    "boj", "china central bank", "pboc", "mongolia central bank", "bom", "myanmar central bank", "cbm",
+    "laos central bank", "bol", "cambodia national bank", "nbc", "vietnam central bank", "sbv",
+    "thailand central bank", "bot", "philippines central bank", "bsp", "indonesia central bank", "bi",
+    "malaysia central bank", "bnm", "singapore monetary authority", "mas", "brunei central bank", "ambd",
+    "east timor central bank", "bctl", "bangladesh central bank", "bb", "pakistan central bank", "sbp",
+    "sri lanka central bank", "cbsl", "nepal central bank", "nrb", "bhutan central bank", "rbn",
+    "maldives central bank", "mma", "mongolia central bank", "bom", "taiwan central bank", "cbc",
+    "hong kong monetary authority", "hkma", "macau monetary authority", "amma", "south korea central bank",
+    "bok", "north korea central bank", "cbprk", "japan central bank", "boj", "china central bank", "pboc"
 ])
 STOP_WORDS = NLTK_STOP_WORDS.union(CUSTOM_STOP_WORDS)
+
 
 # --- Helpers ---
 def clean_text(text):
@@ -243,14 +592,16 @@ def generate_summary_with_t5(text, max_length=150):
 
 # --- AI Suggestion Function (Now uses T5 for narrative, ML for score) ---
 @st.cache_data(show_spinner="Generating AI Suggestion...")
-def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text):
+def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text, matched_keywords, missing_skills):
     """
-    Generates a comprehensive AI suggestion combining T5 summary with rule-based assessment.
+    Generates a comprehensive AI suggestion combining T5 summary with rule-based assessment,
+    including a section on why to hire and company growth.
     """
     overall_fit_phrase = ""
     recommendation_phrase = ""
     strengths = []
     gaps = []
+    growth_potential = []
 
     # Define thresholds
     HIGH_FIT_SCORE = 85
@@ -266,6 +617,9 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
         recommendation_phrase = "Strongly Recommended for Interview"
         strengths.append("Their profile demonstrates an **outstanding conceptual and practical alignment** with the job description.")
         strengths.append(f"They possess **extensive relevant experience** ({years_exp:.1f} years), aligning perfectly with the role's demands.")
+        growth_potential.append(f"Hiring {candidate_name} would directly accelerate our team's objectives by leveraging their deep expertise in **{' and '.join(matched_keywords[:3]) if matched_keywords else 'key areas'}**.")
+        growth_potential.append("Their proven ability in highly relevant fields suggests they can quickly contribute to strategic initiatives and mentor junior staff, fostering internal growth.")
+
     elif score >= MODERATE_FIT_SCORE and years_exp >= MODERATE_EXP and semantic_similarity >= MODERATE_SEMANTIC:
         overall_fit_phrase = "Good Fit"
         recommendation_phrase = "Recommended for Interview"
@@ -274,27 +628,37 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
             gaps.append(f"Experience ({years_exp:.1f} years) is slightly below the ideal, suggesting a need to probe depth in specific areas.")
         if semantic_similarity < HIGH_SEMANTIC:
             gaps.append("Their conceptual alignment with the role is fair; consider probing their approach to complex scenarios outlined in the JD.")
+        growth_potential.append(f"{candidate_name}'s solid foundation in **{' and '.join(matched_keywords[:2]) if matched_keywords else 'relevant skills'}** indicates they can be a reliable contributor, adding capacity and driving project completion.")
+        growth_potential.append("With targeted development, they have the potential to grow into more senior responsibilities, strengthening our long-term team capabilities.")
     else:
         overall_fit_phrase = "Lower Fit"
         recommendation_phrase = "Consider for Further Review / Likely Decline"
         gaps.append("Their overall profile indicates **significant discrepancies** with the job requirements, suggesting a lower overall fit.")
+        growth_potential.append(f"{candidate_name}'s current profile may require significant onboarding or skill development in **{' and '.join(missing_skills[:3]) if missing_skills else 'critical areas'}**, which might limit immediate impact on company growth.")
 
     if years_exp < MODERATE_EXP:
         gaps.append(f"Experience ({years_exp:.1f} years) is notably limited for this role.")
     if semantic_similarity < MODERATE_SEMANTIC:
         gaps.append("A **conceptual gap** exists between their profile and the job description, implying a potential mismatch in understanding or approach.")
+    if missing_skills:
+        gaps.append(f"Key skills explicitly mentioned in the JD such as **{' and '.join(missing_skills[:3])}** appear to be less prominent in their resume.")
+    if matched_keywords:
+        strengths.append(f"Strong alignment with keywords including **{' and '.join(matched_keywords[:3])}**.")
+
 
     # Generate T5 summary for the resume
     t5_resume_summary = generate_summary_with_t5(resume_text)
 
     # Combine all parts into the final suggestion
-    summary_parts = [f"**Overall Fit:** {overall_fit_phrase}."]
+    summary_parts = [f"**Overall Fit:** {overall_fit_phrase}.",]
     if strengths:
         summary_parts.append(f"**Strengths:** {' '.join(strengths)}")
     if gaps:
         summary_parts.append(f"**Areas for Development:** {' '.join(gaps)}")
     summary_parts.append(f"**Resume Summary (T5):** {t5_resume_summary}")
+    summary_parts.append(f"**Why Hire & Company Growth:** {' '.join(growth_potential)}")
     summary_parts.append(f"**Recommendation:** {recommendation_phrase}.")
+
 
     return " ".join(summary_parts)
 
@@ -330,8 +694,8 @@ def semantic_score(resume_text, jd_text, years_exp):
 
 
     try:
-        jd_embed = model.encode(jd_clean) # This gives 768 features
-        resume_embed = model.encode(resume_clean) # This gives 768 features
+        jd_embed = model.encode(jd_clean) # This gives 384 features for all-MiniLM-L6-v2
+        resume_embed = model.encode(resume_clean) # This gives 384 features for all-MiniLM-L6-v2
 
         semantic_similarity = cosine_similarity(jd_embed.reshape(1, -1), resume_embed.reshape(1, -1))[0][0]
         semantic_similarity = float(np.clip(semantic_similarity, 0, 1))
@@ -342,91 +706,26 @@ def semantic_score(resume_text, jd_text, years_exp):
         
         years_exp_for_model = float(years_exp) if years_exp is not None else 0.0
 
-        # *** CRITICAL FIX: Reconstruct the 772-feature vector as expected by the model ***
-        # Assuming the model was trained on:
-        # [768 features from jd_embed] + [768 features from resume_embed] +
-        # [years_exp_for_model] + [keyword_overlap_count] + [semantic_similarity]
-        # This means the ML model needs the concatenated embeddings PLUS the three scalar features.
-        # However, the error message indicates 772, and standard SentenceTransformer embeddings are 768.
-        # This implies either:
-        # 1. It's (768 from JD) + (years_exp, keyword_overlap, semantic_similarity) = 771 (not 772)
-        # 2. Or, it's (768 from JD) + (768 from Resume) + (years_exp, keyword_overlap, semantic_similarity) which would be 1539.
-        # Given the error "X has 3 features, but RandomForestRegressor is expecting 772 features",
-        # it strongly suggests that the **model was trained on the SentenceTransformer embedding of one text (likely JD)
-        # combined with a few additional features.** Let's try combining JD embedding with years_exp, keyword_overlap_count, and semantic_similarity.
-
-        # Let's assume the model was trained on:
-        # jd_embed (768 features) + [years_exp_for_model, keyword_overlap_count, semantic_similarity]
-        # Total: 768 + 3 = 771 features.
-        # The user states 772 features, so there might be one more feature or a slight misunderstanding.
-        # However, the most common setup for this kind of problem is:
-        # [embedding_of_JD] concatenated with [embedding_of_resume] plus some scalars.
-        # Or just [embedding_of_JD] + scalar features.
-        # The original code's `features = np.concatenate([jd_embed, resume_embed, [years_exp_for_model], [keyword_overlap_count]])`
-        # would give 768 + 768 + 1 + 1 = 1538 features. This doesn't match 772.
-
-        # Given the error "X has 3 features, but RandomForestRegressor is expecting 772 features",
-        # the previous fix `features = np.array([semantic_similarity, years_exp_for_model, keyword_overlap_count]).reshape(1, -1)`
-        # was the direct cause, as it only provided 3 features.
-
-        # Let's try the most likely scenario for 772 features if SentenceTransformer is used for one text (768 features):
-        # 768 (from JD embedding) + 4 additional features (years_exp, keyword_overlap_count, semantic_similarity, plus one more feature that was perhaps used during training)
-        # Or, maybe the SentenceTransformer model you used was actually 764 dimensions, and 8 additional features? Unlikely.
-        # The most straightforward path to 772 features is if one of the embeddings used was exactly 768, and 4 other scalar features.
-
-        # Let's assume the 772 features consist of:
-        # The 768-dimensional JD embedding + years_exp_for_model + keyword_overlap_count + semantic_similarity + **one more scalar feature.**
-        # What could that "one more scalar feature" be?
-        # Often it could be a simple "ratio of matched keywords" or "length of resume" etc.
-        # Since we don't have that "one more scalar feature" from the training context,
-        # the best guess is that the `ml_screening_model.pkl` might have been trained on:
-        # **`jd_embed` (768 features) concatenated with `resume_embed` (768 features)**
-        # AND THEN the error message `X has 3 features` refers to the *scalar* features that were originally
-        # provided to the model, and the expectation of 772 features is misleading or refers to an earlier stage.
-        # Let's re-evaluate the original problem setup:
-
-        # The error states "X has 3 features, but RandomForestRegressor is expecting 772 features".
-        # This *directly* means the input *array* for prediction has 3 columns/features, but it needs 772.
-        # This implies the problem is in the line `predicted_score = ml_model.predict([features])[0]`.
-        # The `features` variable *must* be an array of 772 elements.
-
-        # If `model` is "all-MiniLM-L6-v2", its embeddings are 384 dimensions, not 768.
-        # If it was "all-mpnet-base-v2", it would be 768.
-        # Let's check the embedding dimension of "all-MiniLM-L6-v2":
-        # Its embedding dimension is 384.
-
-        # So, if jd_embed is 384 and resume_embed is 384:
-        # `np.concatenate([jd_embed, resume_embed, [years_exp_for_model], [keyword_overlap_count]])`
-        # would yield 384 + 384 + 1 + 1 = 770 features.
-        # This is very close to 772. This suggests two more features are missing.
-        # These missing features are *very likely* `semantic_similarity` itself, and perhaps `jd_coverage_percentage` (or a similar derived metric).
-
-        # Let's assume the 772 features are derived from:
-        # 1. `jd_embed` (384 features)
-        # 2. `resume_embed` (384 features)
-        # 3. `years_exp_for_model` (1 feature)
-        # 4. `keyword_overlap_count` (1 feature)
-        # 5. `semantic_similarity` (1 feature)
-        # 6. `jd_coverage_percentage` (1 feature)
-        # Total: 384 + 384 + 1 + 1 + 1 + 1 = 772 features. This is the most logical explanation.
-
         # Calculate jd_coverage_percentage before creating features for the model
         if len(jd_words_filtered) > 0:
             jd_coverage_percentage = (keyword_overlap_count / len(jd_words_filtered)) * 100
         else:
             jd_coverage_percentage = 0.0
 
+        # Construct the 772-feature vector
+        # 384 (JD embed) + 384 (Resume embed) + 1 (years_exp) + 1 (keyword_overlap) + 1 (semantic_similarity) + 1 (jd_coverage_percentage) = 772
         features = np.concatenate([
             jd_embed,
             resume_embed,
             [years_exp_for_model],
             [keyword_overlap_count],
             [semantic_similarity],
-            [jd_coverage_percentage] # Add this as the 772nd feature
+            [jd_coverage_percentage]
         ])
 
         predicted_score = ml_model.predict([features])[0]
 
+        # Blending logic (can be adjusted)
         blended_score = (predicted_score * 0.6) + \
                         (jd_coverage_percentage * 0.1) + \
                         (semantic_similarity * 100 * 0.3)
@@ -525,7 +824,7 @@ if jd_text and resume_files:
     # --- Job Description Keyword Cloud ---
     st.markdown("---")
     st.markdown("## ☁️ Job Description Keyword Cloud")
-    st.caption("Visualizing the most frequent and important keywords from the Job Description.")
+    st.caption("Visualizing the most frequent and important keywords from the Job Description (common words filtered out).")
     jd_words_for_cloud = " ".join([word for word in re.findall(r'\b\w+\b', clean_text(jd_text)) if word not in STOP_WORDS])
     if jd_words_for_cloud:
         wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(jd_words_for_cloud)
@@ -564,10 +863,10 @@ if jd_text and resume_files:
         resume_words_set = {word for word in re.findall(r'\b\w+\b', resume_clean_for_keywords) if word not in STOP_WORDS}
         jd_words_set = {word for word in re.findall(r'\b\w+\b', jd_clean_for_keywords) if word not in STOP_WORDS}
 
-        matched_keywords = list(resume_words_set.intersection(jd_words_set))
+        matched_keywords_list = sorted(list(resume_words_set.intersection(jd_words_set)))
         
         # Corrected: missing_skills should be JD words not in resume words
-        missing_skills = list(jd_words_set.difference(resume_words_set)) 
+        missing_skills_list = sorted(list(jd_words_set.difference(resume_words_set)))
         
         score, _, semantic_similarity = semantic_score(text, jd_text, exp)
         
@@ -577,7 +876,9 @@ if jd_text and resume_files:
             years_exp=exp,
             semantic_similarity=semantic_similarity,
             jd_text=jd_text,
-            resume_text=text
+            resume_text=text,
+            matched_keywords=matched_keywords_list,
+            missing_skills=missing_skills_list
         )
 
         results.append({
@@ -587,8 +888,8 @@ if jd_text and resume_files:
             "Years Experience": exp,
             "Email": email or "Not Found",
             "AI Suggestion": detailed_ai_suggestion,
-            "Matched Keywords": ", ".join(matched_keywords),
-            "Missing Skills": ", ".join(missing_skills),
+            "Matched Keywords": ", ".join(matched_keywords_list),
+            "Missing Skills": ", ".join(missing_skills_list),
             "Semantic Similarity": semantic_similarity,
             "Resume Raw Text": text
         })
@@ -632,13 +933,13 @@ if jd_text and resume_files:
 
     # --- TOP CANDIDATE AI RECOMMENDATION (Game Changer Feature) ---
     st.markdown("## 👑 Top Candidate AI Recommendation")
-    st.caption("A concise, AI-powered assessment for the most suitable candidate.")
+    st.caption("A concise, AI-powered assessment for the most suitable candidate, focusing on their potential impact.")
     
     if not df.empty:
         top_candidate = df.iloc[0]
         st.markdown(f"### **{top_candidate['Candidate Name']}**")
         st.markdown(f"**Score:** {top_candidate['Score (%)']:.2f}% | **Experience:** {top_candidate['Years Experience']:.1f} years | **Semantic Similarity:** {top_candidate['Semantic Similarity']:.2f}")
-        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}")
+        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}") # This now includes the growth section
         
         if top_candidate['Email'] != "Not Found":
             mailto_link_top = create_mailto_link(
@@ -659,7 +960,7 @@ if jd_text and resume_files:
 
     # === AI Recommendation for Shortlisted Candidates (Streamlined) ===
     st.markdown("## 🌟 Shortlisted Candidates Overview")
-    st.caption("Candidates meeting your score and experience criteria.")
+    st.caption("Candidates meeting your score and experience criteria, with their AI-generated summaries.")
 
     shortlisted_candidates = df[(df['Score (%)'] >= cutoff) & (df['Years Experience'] >= min_experience)]
 
@@ -672,7 +973,7 @@ if jd_text and resume_files:
             'Years Experience',
             'Semantic Similarity',
             'Email',
-            'AI Suggestion'
+            'AI Suggestion' # Individual AI suggestion for each
         ]
         
         st.dataframe(
@@ -701,7 +1002,8 @@ if jd_text and resume_files:
                 ),
                 "AI Suggestion": st.column_config.Column(
                     "AI Suggestion",
-                    help="AI's concise overall assessment and recommendation"
+                    help="AI's concise overall assessment and recommendation",
+                    width="large" # Make it wider to show more text
                 )
             }
         )
@@ -717,7 +1019,7 @@ if jd_text and resume_files:
         "✅ Good Fit" if row['Score (%)'] >= 75 else "⚠️ Needs Review"), axis=1)
 
     st.markdown("## 📋 Comprehensive Candidate Results Table")
-    st.caption("Full details for all processed resumes. **For deep dive analytics and keyword breakdowns, refer to the Analytics Dashboard.**")
+    st.caption("Full details for all processed resumes, including individual AI suggestions. **For deep dive analytics and keyword breakdowns, refer to the Analytics Dashboard.**")
     
     comprehensive_cols = [
         'Candidate Name',
@@ -726,7 +1028,7 @@ if jd_text and resume_files:
         'Semantic Similarity',
         'Tag',
         'Email',
-        'AI Suggestion',
+        'AI Suggestion', # Ensure this is included
         'Matched Keywords',
         'Missing Skills',
     ]
@@ -760,7 +1062,7 @@ if jd_text and resume_files:
             "AI Suggestion": st.column_config.Column(
                 "AI Suggestion",
                 help="AI's concise overall assessment and recommendation",
-                width="large"
+                width="large" # Make it wider to show more text
             ),
             "Matched Keywords": st.column_config.Column(
                 "Matched Keywords",
