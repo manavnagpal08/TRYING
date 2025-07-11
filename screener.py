@@ -24,6 +24,7 @@ import os # For os.path.exists, os.listdir
 DATABASE_FILE = "screening_data.db"
 @st.cache_resource
 def init_db():
+    print(f"DEBUG: Attempting to initialize database at: {os.path.abspath(DATABASE_FILE)}")
     st.info(f"Attempting to initialize database at: {os.path.abspath(DATABASE_FILE)}")
     conn = None
     try:
@@ -51,12 +52,15 @@ def init_db():
             )
         ''')
         conn.commit()
+        print("DEBUG: Database 'results' table checked/created successfully.")
         st.success("Database 'results' table checked/created successfully.")
         return True
     except sqlite3.Error as e:
+        print(f"DEBUG: SQLite database initialization error: {e}")
         st.error(f"SQLite database initialization error: {e}")
         return False
     except Exception as e:
+        print(f"DEBUG: General database initialization error: {e}")
         st.error(f"General database initialization error: {e}")
         return False
     finally:
@@ -68,9 +72,11 @@ db_initialized = init_db()
 
 # --- Explicit check for database file existence ---
 if not os.path.exists(DATABASE_FILE):
+    print(f"DEBUG: Database file '{DATABASE_FILE}' was NOT found after initialization attempt.")
     st.error(f"Database file '{DATABASE_FILE}' was NOT found after initialization attempt. This indicates a permission issue or a critical failure during DB creation.")
     st.stop() # Stop the app if the database file isn't there
 else:
+    print(f"DEBUG: Database file '{DATABASE_FILE}' found. Proceeding.")
     st.info(f"Database file '{DATABASE_FILE}' found. Proceeding.")
 
 if not db_initialized:
@@ -228,6 +234,8 @@ def extract_years_of_experience(text):
             except ValueError:
                 try:
                     end_date = datetime.strptime(end.strip(), '%B %Y')
+                    if end_date > datetime.now(): # Handle future dates from parsing
+                        end_date = datetime.now()
                 except ValueError:
                     continue
         delta_months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
@@ -453,8 +461,8 @@ def insert_or_update_screening_result(jd_hash, jd_summary, candidate_name, score
                 length_score = ?,
                 shortlisted = ?,
                 full_resume_text = ?,
-                detailed_ai_suggestion = ?,
-                years_exp = ?,
+                detailed_ai_suggestion = ?, -- Use detailed_ai_suggestion
+                years_exp = ?,             -- Use years_exp
                 email = ?
             WHERE id = ?
         ''', (scores['predicted_score'], scores['keyword_match_score'],
@@ -549,11 +557,13 @@ def send_email(recipient_email, subject, body):
         server.login(sender_email, sender_password)
         text = msg.as_string()
         server.sendmail(sender_email, recipient_email, text)
-        server.quit()
-        return True
     except Exception as e:
         st.error(f"Failed to send email. Error: {e}. Check sender email/password and allow less secure apps or use App Passwords for Gmail.")
         return False
+    finally:
+        if 'server' in locals() and server:
+            server.quit()
+    return True
 
 # --- Streamlit UI ---
 st.set_page_config(layout="wide", page_title="ScreenerPro - AI Resume Screener", page_icon="🧠")
@@ -744,6 +754,7 @@ if not st.session_state.results_df.empty:
     st.markdown("## ✅ Shortlisted Candidates")
     st.caption("Candidates you have marked as 'Shortlisted'.")
     # Fetch from DB for the current JD to ensure latest shortlist status
+    # This will use the get_screening_results_from_db function which renames columns
     all_candidates_for_current_jd = get_screening_results_from_db(jd_hash=current_jd_hash)
     shortlisted_candidates_db = all_candidates_for_current_jd[all_candidates_for_current_jd['shortlisted'] == True]
 
