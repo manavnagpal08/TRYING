@@ -187,7 +187,7 @@ if __name__ == "__main__":
     print("Loading training data...")
     # IMPORTANT: Ensure 'ai_resume_training_data_450_diverse.csv' is in the same directory
     try:
-        df = pd.read_csv('ai_resume_training_data_5000_final.csv')
+        df = pd.read_csv('ai_resume_training_data_450_final.csv')
         print("Training data loaded successfully!")
     except FileNotFoundError:
         print("Error: 'ai_resume_training_data_450_diverse.csv' not found. Please ensure it's in the same directory.")
