@@ -492,6 +492,7 @@ else:
 
 
 st.markdown("---") # Visual separator in the main content area
+# ... (previous code) ...
 
 # --- Main Content Area for Resume Analysis ---
 if uploaded_resumes and job_description_file:
@@ -499,8 +500,9 @@ if uploaded_resumes and job_description_file:
     results = [] # To store results for all resumes
 
     if model and ml_model and t5_tokenizer and t5_model:
-        if not jd_embedding:
-            st.error("Could not generate embedding for the Job Description. AI Similarity Score will not be available.")
+        # REMOVE THE FOLLOWING BLOCK - IT'S CAUSING THE ERROR
+        # if not jd_embedding:
+        #     st.error("Could not generate embedding for the Job Description. AI Similarity Score will not be available.")
         
         for i, resume_file in enumerate(uploaded_resumes):
             st.markdown(f"#### Analyzing: {resume_file.name}")
@@ -537,12 +539,14 @@ if uploaded_resumes and job_description_file:
             
             # --- Generate Embedding for Resume and Predict ML Match ---
             match_proba = 0.0
-            if jd_embedding is not None:
+            if jd_embedding is not None: # This check is already sufficient
                 resume_embedding = model.encode(resume_text)
                 match_proba = predict_match_ml(resume_embedding, jd_embedding, ml_model)
                 st.write(f"**AI Similarity Score (ML Match Probability):** {match_proba:.2%}")
             else:
                 st.info("AI Similarity Score not available without Job Description embedding.")
+
+            # ... (rest of your code) ...
 
             # --- Summarize Resume using T5 Model ---
             summary = summarize_resume_t5(resume_text, t5_tokenizer, t5_model)
