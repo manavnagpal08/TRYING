@@ -18,25 +18,32 @@ import urllib.parse
 # Import T5 specific libraries
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# Download NLTK stopwords data if not already downloaded
+# --- NLTK Data Downloads (Ensured at the very beginning) ---
+# It's crucial that NLTK data is available before any NLTK function calls.
+# This block attempts to download if not found, making it robust for deployment.
+# Placing it at the very top helps ensure it runs early.
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
+    st.info("Downloading NLTK stopwords...")
     nltk.download('stopwords')
 try:
     nltk.data.find('corpora/wordnet') # For lemmatization
 except LookupError:
+    st.info("Downloading NLTK wordnet...")
     nltk.download('wordnet')
 try:
     nltk.data.find('taggers/averaged_perceptron_tagger') # For POS tagging
 except LookupError:
+    st.info("Downloading NLTK averaged_perceptron_tagger...")
     nltk.download('averaged_perceptron_tagger')
 try:
-    nltk.data.find('tokenizers/punkt') # For sentence tokenization
+    nltk.data.find('tokenizers/punkt') # For sentence tokenization (critical for word_tokenize)
 except LookupError:
+    st.info("Downloading NLTK punkt tokenizer...")
     nltk.download('punkt')
 
-
+# Import NLTK components *after* ensuring data is downloaded
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet # To map POS tags for WordNetLemmatizer
 
@@ -46,11 +53,12 @@ from nltk.corpus import wordnet # To map POS tags for WordNetLemmatizer
 def load_ml_model():
     """Loads the SentenceTransformer model for embeddings and a pre-trained ML screening model."""
     try:
+        # Check if model path is correct if deployed
         model = SentenceTransformer("all-MiniLM-L6-v2")
-        ml_model = joblib.load("ml_screening_model.pkl") # Ensure this file exists
+        ml_model = joblib.load("ml_screening_model.pkl") # Ensure this file exists in the same directory
         return model, ml_model
     except Exception as e:
-        st.error(f"❌ Error loading models: {e}. Please ensure 'ml_screening_model.pkl' is in the same directory.")
+        st.error(f"❌ Error loading models: {e}. Please ensure 'ml_screening_model.pkl' is in the same directory and network is available for SentenceTransformer.")
         return None, None
 
 # --- Load T5 Model ---
@@ -65,7 +73,7 @@ def load_t5_model():
         t5_model = AutoModelForSeq2SeqLM.from_pretrained(T5_REPO_ID)
         st.success("T5 Model loaded successfully from Hugging Face Hub!")
     except Exception as e:
-        st.error(f"Error loading T5 model from Hugging Face Hub: {e}")
+        st.error(f"Error loading T5 model from Hugging Face Hub: {e}. Check network connection and model availability.")
     return t5_tokenizer, t5_model
 
 # Load all models at startup
@@ -597,16 +605,15 @@ def predict_match_ml(resume_embedding, job_description_embedding, ml_model):
 st.set_page_config(layout="wide", page_title="ScreenerPro – AI Hiring Assistant 🧠")
 st.title("🧠 ScreenerPro – AI Hiring Assistant")
 
-# --- Sidebar for Inputs ---
-st.sidebar.header("Upload Job Description (PDF/TXT)")
-job_description_file = st.sidebar.file_uploader("Upload Job Description", type=["pdf", "txt"], key="jd_upload")
+# --- UI Elements - NO SIDEBAR ---
+st.header("1. Upload Job Description (PDF/TXT)")
+job_description_file = st.file_uploader("Upload Job Description", type=["pdf", "txt"], key="jd_upload")
 
-st.sidebar.header("Upload Resumes (PDF)")
-uploaded_resumes = st.sidebar.file_uploader("Upload Resumes", type=["pdf"], accept_multiple_files=True, key="resume_upload")
+st.header("2. Upload Resumes (PDF)")
+uploaded_resumes = st.file_uploader("Upload Resumes", type=["pdf"], accept_multiple_files=True, key="resume_upload")
 
-st.sidebar.header("Target Job Role for Skill Matching")
-# Dropdown for job roles defined in JOB_SKILLS
-selected_job_role = st.sidebar.selectbox(
+st.header("3. Select Target Job Role for Skill Matching")
+selected_job_role = st.selectbox(
     "Select a Job Role for Skill Matching:",
     list(JOB_SKILLS.keys())
 )
@@ -623,8 +630,8 @@ if job_description_file:
     else: # text file
         job_description_text = job_description_file.read().decode("utf-8")
     
-    st.sidebar.subheader("Job Description Content (Excerpt)")
-    st.sidebar.text(job_description_text[:500] + "...") # Show first 500 chars
+    st.subheader("Job Description Content (Excerpt)")
+    st.text(job_description_text[:500] + "...") # Show first 500 chars
 
     # Process JD for skills and embeddings if models loaded
     if model:
