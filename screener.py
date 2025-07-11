@@ -7,9 +7,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from pypdf import PdfReader # NEW: Import PdfReader for PDF text extraction
 
 # --- 1. Load Models and Resources ---
-# Removed SpaCy import and loading
 # Load the pre-trained ML screening model (RandomForestRegressor)
 try:
     ml_screening_model = joblib.load('ml_screening_model.pkl')
@@ -32,8 +32,8 @@ try:
     st.sidebar.success("T5 Model loaded successfully from Hugging Face Hub!")
 except Exception as e:
     st.sidebar.error(f"Error loading T5 model from Hugging Face Hub: {e}")
-    t5_tokenizer = None
-    t5_model = None
+    t5_tokenizer = None # Set to None if loading fails to prevent further errors
+    t5_model = None     # Set to None if loading fails to prevent further errors
 
 # --- Configuration ---
 # Define required sections in a resume
@@ -54,13 +54,36 @@ tfidf_vectorizer = None
 # --- Helper Functions ---
 
 def clean_text(text):
-    # This function does not use SpaCy and relies on regex/string methods.
+    """
+    Cleans text by converting to lowercase, removing non-alphanumeric characters,
+    and normalizing whitespace.
+    """
     text = text.lower()
     text = re.sub(r'[^a-z0-9\s]', '', text) # Remove punctuation and special characters
     text = re.sub(r'\s+', ' ', text).strip() # Replace multiple spaces with a single space
     return text
 
+# NEW: Function to extract text from PDF using pypdf
+def extract_text_from_pdf(pdf_file):
+    """
+    Extracts text content from an uploaded PDF file.
+    """
+    text = ""
+    try:
+        reader = PdfReader(pdf_file)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text: # Ensure page_text is not None before appending
+                text += page_text + "\n" # Add newline between pages for better readability
+    except Exception as e:
+        st.error(f"Error reading PDF: {e}")
+        return ""
+    return text
+
 def extract_sections(text):
+    """
+    Extracts common sections from a resume text based on predefined headers.
+    """
     sections = {}
     matches = list(SECTION_HEADERS_PATTERN.finditer(text))
     
@@ -72,13 +95,15 @@ def extract_sections(text):
     return sections
 
 def calculate_keyword_match_score(job_description, resume_text):
+    """
+    Calculates a TF-IDF based cosine similarity score between job description and resume.
+    """
     global tfidf_vectorizer
     if tfidf_vectorizer is None:
         tfidf_vectorizer = TfidfVectorizer(stop_words='english')
 
-    # Ensure job_description and resume_text are not empty before fitting/transforming
-    if not job_description.strip() and not resume_text.strip():
-        return 0.0 # No content, so no match
+    if not job_description.strip() or not resume_text.strip():
+        return 0.0 # Cannot calculate if either is empty
 
     documents = [clean_text(job_description), clean_text(resume_text)]
     try:
@@ -93,18 +118,25 @@ def calculate_keyword_match_score(job_description, resume_text):
     return float(cosine_sim)
 
 def calculate_section_completeness(resume_sections):
+    """
+    Calculates a score based on the presence of required sections in the resume.
+    """
     completeness_score = sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec])
     return completeness_score / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0
 
 def calculate_semantic_similarity(job_description, resume_text):
+    """
+    Calculates semantic similarity using SentenceTransformer embeddings.
+    """
     jd_embedding = sentence_model.encode(clean_text(job_description))
     resume_embedding = sentence_model.encode(clean_text(resume_text))
     similarity = cosine_similarity([jd_embedding], [resume_embedding])[0][0]
     return float(similarity)
 
 def calculate_length_score(resume_text):
-    # Ideal resume length is often considered 1-2 pages or 400-800 words for experienced
-    # Simple heuristic: Longer resumes might have more detail, but too long can be bad.
+    """
+    Assigns a score based on the word count of the resume, favoring a moderate length.
+    """
     word_count = len(resume_text.split())
     if word_count < 200: return 0.2
     if word_count < 400: return 0.5
@@ -114,19 +146,20 @@ def calculate_length_score(resume_text):
 
 # --- T5 Summarization Function ---
 def generate_summary_with_t5(text, max_length=150):
+    """
+    Generates a summary of the given text using the loaded T5 model.
+    """
     if not t5_model or not t5_tokenizer:
         return "T5 model not loaded."
     
-    # Prefix for summarization task (common for T5 fine-tuning)
     input_text = "summarize: " + text
     
     input_ids = t5_tokenizer.encode(input_text, return_tensors="pt", max_length=512, truncation=True)
     
-    # Generate output
     output_ids = t5_model.generate(
         input_ids,
         max_new_tokens=max_length,
-        num_beams=4, # Use beam search for better quality
+        num_beams=4,
         early_stopping=True
     )
     
@@ -135,6 +168,9 @@ def generate_summary_with_t5(text, max_length=150):
 
 # --- Main Scoring Function ---
 def get_screening_features_and_score(job_description, resume_text):
+    """
+    Calculates various features and predicts an overall fit score using the ML model.
+    """
     cleaned_jd = clean_text(job_description)
     cleaned_resume = clean_text(resume_text)
 
@@ -184,7 +220,9 @@ with col1:
         if job_description_file.type == "text/plain":
             job_description_text = job_description_file.read().decode("utf-8")
         elif job_description_file.type == "application/pdf":
-            st.warning("PDF parsing is not fully implemented in this example. Please copy-paste text from PDF.")
+            job_description_text = extract_text_from_pdf(job_description_file) # Use new PDF extraction
+            if not job_description_text.strip():
+                st.warning("Could not extract text from Job Description PDF. Please try pasting its content manually.")
         st.text_area("Or paste Job Description here:", value=job_description_text, height=300, key="jd_upload_text_area")
     else:
         job_description_text = st.text_area("Paste Job Description here:", height=300, key="jd_text_area")
@@ -212,7 +250,9 @@ if job_description_text and resume_files:
         if resume_file.type == "text/plain":
             resume_text = resume_file.read().decode("utf-8")
         elif resume_file.type == "application/pdf":
-            st.warning(f"PDF parsing for {resume_file.name} is not fully implemented in this example. Please copy-paste text.")
+            resume_text = extract_text_from_pdf(resume_file) # Use new PDF extraction
+            if not resume_text.strip():
+                st.warning(f"Could not extract text from PDF {resume_file.name}. Please try pasting its content manually.")
         
         if not resume_text.strip():
             st.info("No content extracted/pasted for this resume. Skipping analysis.")
@@ -275,5 +315,6 @@ st.sidebar.info(
     "job descriptions and candidate resumes. It uses TF-IDF for keyword matching, "
     "SentenceTransformers for semantic similarity, and a RandomForestRegressor "
     "for overall fit prediction. "
-    "\n\n**New:** Integrated with a fine-tuned T5 model for concise job description and resume summaries!"
+    "\n\n**New:** Integrated with a fine-tuned T5 model for concise job description and resume summaries, "
+    "and now supports direct PDF text extraction!"
 )
