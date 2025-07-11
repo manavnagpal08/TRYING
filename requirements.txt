@@ -14,5 +14,4 @@ google-generativeai
 plotly
 statsmodels 
 pypdf
-sqlite3
-hashlib
+
