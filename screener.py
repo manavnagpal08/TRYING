@@ -31,9 +31,16 @@ try:
     nltk.data.find('taggers/averaged_perceptron_tagger') # For POS tagging
 except LookupError:
     nltk.download('averaged_perceptron_tagger')
+# --- ADD THIS LINE TO DOWNLOAD 'punkt' ---
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
 
 from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet
+from nltk.corpus import wordnet # To map POS tags for WordNetLemmatizer
+
+# ... (rest of your code)
 
 # --- Load Embedding + ML Model ---
 @st.cache_resource
