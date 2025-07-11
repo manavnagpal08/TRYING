@@ -31,23 +31,23 @@ try:
     nltk.data.find('taggers/averaged_perceptron_tagger') # For POS tagging
 except LookupError:
     nltk.download('averaged_perceptron_tagger')
-# --- ADD THIS LINE TO DOWNLOAD 'punkt' ---
 try:
-    nltk.data.find('tokenizers/punkt')
+    nltk.data.find('tokenizers/punkt') # For sentence tokenization
 except LookupError:
     nltk.download('punkt')
+
 
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet # To map POS tags for WordNetLemmatizer
 
-# ... (rest of your code)
 
 # --- Load Embedding + ML Model ---
 @st.cache_resource
 def load_ml_model():
+    """Loads the SentenceTransformer model for embeddings and a pre-trained ML screening model."""
     try:
         model = SentenceTransformer("all-MiniLM-L6-v2")
-        ml_model = joblib.load("ml_screening_model.pkl")
+        ml_model = joblib.load("ml_screening_model.pkl") # Ensure this file exists
         return model, ml_model
     except Exception as e:
         st.error(f"❌ Error loading models: {e}. Please ensure 'ml_screening_model.pkl' is in the same directory.")
@@ -56,9 +56,10 @@ def load_ml_model():
 # --- Load T5 Model ---
 @st.cache_resource
 def load_t5_model():
+    """Loads a pre-trained T5 model for resume summarization from Hugging Face Hub."""
     t5_tokenizer = None
     t5_model = None
-    T5_REPO_ID = "mnagpal/fine-tuned-t5-resume-screener"
+    T5_REPO_ID = "mnagpal/fine-tuned-t5-resume-screener" # Specific T5 model for resume summarization
     try:
         t5_tokenizer = AutoTokenizer.from_pretrained(T5_REPO_ID)
         t5_model = AutoModelForSeq2SeqLM.from_pretrained(T5_REPO_ID)
@@ -67,15 +68,16 @@ def load_t5_model():
         st.error(f"Error loading T5 model from Hugging Face Hub: {e}")
     return t5_tokenizer, t5_model
 
-# Load all models
+# Load all models at startup
 model, ml_model = load_ml_model()
 t5_tokenizer, t5_model = load_t5_model()
 
-# Initialize Lemmatizer
+# Initialize Lemmatizer for NLTK
 lemmatizer = WordNetLemmatizer()
 
 # --- Helper function to map NLTK POS tags to WordNetLemmatizer tags ---
 def get_wordnet_pos(treebank_tag):
+    """Maps NLTK's Part-of-Speech tags to WordNet's POS tags for lemmatization."""
     if treebank_tag.startswith('J'):
         return wordnet.ADJ
     elif treebank_tag.startswith('V'):
@@ -88,10 +90,9 @@ def get_wordnet_pos(treebank_tag):
         return wordnet.NOUN # Default to noun if no clear tag
 
 
-# --- Stop Words List (Using NLTK) ---
+# --- Stop Words List (Using NLTK + Custom) ---
 NLTK_STOP_WORDS = set(nltk.corpus.stopwords.words('english'))
-# Add your comprehensive custom stop words list here.
-# This list helps filter out very common words that are rarely skills.
+# Comprehensive list of words to be filtered out because they are typically not skills
 CUSTOM_STOP_WORDS = set([
     "work", "experience", "years", "year", "months", "month", "day", "days", "project", "projects",
     "team", "teams", "developed", "managed", "led", "created", "implemented", "designed",
@@ -423,7 +424,7 @@ JOB_SKILLS = {
         "Product Lifecycle", "MVP", "Backlog Grooming", "UX Research", "Business Analysis", "Gantt Charts"
     },
     "Data Analyst": {
-        "SQL", "Excel", "Power BI", "Tableau", "Google Data Studio", "Data Cleaning", "Data Visualization",
+        "SQL", "Excel", "Power BI", "Tableau", "Looker", "Google Data Studio", "Data Cleaning", "Data Visualization",
         "Statistical Analysis", "Google Analytics", "Business Analysis", "ETL", "Data Modeling"
     },
     "DevOps Engineer": {
@@ -433,8 +434,8 @@ JOB_SKILLS = {
     },
     "Marketing Specialist": {
         "Digital Marketing", "SEO", "SEM", "Google Ads", "Facebook Ads", "Email Marketing", "Growth Hacking",
-        "Marketing Analytics", "Content Strategy", "HubSpot", "Lead Generation", "Campaign Management",
-        "Conversion Optimization", "CRM", "Brand Management"
+        "Marketing Analytics", "Content Strategy", "HubSpot", "Salesforce CRM", "Lead Generation", "Campaign Management",
+        "Conversion Optimization", "CRM", "Sales Strategy", "Negotiation", "Cold Calling", "Brand Management"
     },
     "HR Manager": {
         "Recruitment", "Onboarding", "Employee Relations", "Payroll", "Compensation and Benefits", "HRIS",
@@ -447,13 +448,13 @@ JOB_SKILLS = {
     },
     "Cybersecurity Analyst": {
         "Network Security", "Vulnerability Scanning", "Penetration Testing", "IAM", "SIEM", "Splunk",
-        "QRadar", "Encryption", "Firewalls", "Incident Response", "Active Directory", "ITIL", "Healthcare Compliance", "HIPAA" # Added Healthcare/HIPAA as it often comes up in security contexts
+        "QRadar", "Encryption", "Firewalls", "Incident Response", "Active Directory", "ITIL", "Healthcare Compliance", "HIPAA"
     },
     "Financial Analyst": {
         "Financial Analysis", "Budgeting", "Forecasting", "Excel", "Financial Reporting", "Cost Accounting",
         "ERP", "GAAP", "Auditing", "Statistical Analysis"
     },
-    "Customer Service Rep": { # Added a new role
+    "Customer Service Rep": {
         "Customer Relationship Management", "Call Handling", "Issue Resolution", "Zendesk",
         "Live Chat Support", "Ticketing Systems", "Email Communication", "Scheduling"
     }
@@ -468,6 +469,10 @@ JOB_SKILLS_LOWER = {
 
 # --- Keyword Extraction Function (Enhanced) ---
 def extract_skills_from_text(text):
+    """
+    Extracts relevant skills from a given text using multi-word matching,
+    lemmatization, POS tagging, and stop word filtering.
+    """
     text = text.lower()
     
     # Use NLTK for tokenization and POS tagging
@@ -477,19 +482,20 @@ def extract_skills_from_text(text):
     extracted_skills = set()
     
     # First, try to match multi-word skills (bi-grams, tri-grams from all_skills_master)
-    # This ensures that "Machine Learning" is captured as one skill before breaking it down
     # Iterate through skills_master sorted by length (descending) to prioritize longer matches
     sorted_master_skills = sorted(list(ALL_SKILLS_MASTER_SET), key=len, reverse=True)
 
-    processed_text = text # Keep track of parts of text already matched
+    # Use a copy of the text to mark out matched skills, preventing partial matches
+    processed_text = text 
     for skill in sorted_master_skills:
         # Create a regex pattern for the multi-word skill to find it in the text
         # Use word boundaries (\b) to match whole words and re.escape for special characters
         pattern = r'\b' + re.escape(skill) + r'\b'
         if re.search(pattern, processed_text):
             extracted_skills.add(skill)
-            # Replace matched skill with placeholders to avoid re-matching its components
-            processed_text = re.sub(pattern, ' ', processed_text)
+            # Replace matched skill with placeholders to avoid re-matching its components later
+            # Replace with spaces to maintain word boundaries for subsequent single-word tokenization
+            processed_text = re.sub(pattern, ' ' * len(skill), processed_text) # Replace with spaces of same length
 
     # Now process the remaining text for single words, after multi-words are extracted
     # Re-tokenize and tag the processed_text
@@ -512,16 +518,21 @@ def extract_skills_from_text(text):
     return list(extracted_skills)
 
 
-# --- Existing functions (extract_text_from_pdf, generate_wordcloud, etc.) ---
-
+# --- Core PDF Text Extraction ---
 def extract_text_from_pdf(pdf_file):
+    """Extracts all text content from a PDF file."""
     text = ""
-    with pdfplumber.open(pdf_file) as pdf:
-        for page in pdf.pages:
-            text += page.extract_text() or ""
+    try:
+        with pdfplumber.open(pdf_file) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+    except Exception as e:
+        st.error(f"Error extracting text from PDF: {e}")
     return text
 
+# --- Word Cloud Generation ---
 def generate_wordcloud(skills_list):
+    """Generates and displays a word cloud from a list of skills."""
     if skills_list:
         skills_text = " ".join(skills_list)
         wordcloud = WordCloud(width=800, height=400, background_color='white').generate(skills_text)
@@ -532,7 +543,9 @@ def generate_wordcloud(skills_list):
     else:
         st.info("No skills to display in word cloud.")
 
+# --- Skills Bar Chart Generation ---
 def generate_skills_chart(skills_list):
+    """Generates and displays a bar chart of skill frequencies."""
     if skills_list:
         skill_counts = collections.Counter(skills_list)
         df_skills = pd.DataFrame(skill_counts.items(), columns=['Skill', 'Count']).sort_values(by='Count', ascending=False)
@@ -540,39 +553,51 @@ def generate_skills_chart(skills_list):
     else:
         st.info("No skills to display in chart.")
 
+# --- Resume Summarization using T5 ---
 def summarize_resume_t5(resume_text, t5_tokenizer, t5_model):
+    """Summarizes a resume using the loaded T5 model."""
     if t5_tokenizer and t5_model:
         prompt = "summarize the following resume: " + resume_text
         inputs = t5_tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True)
+        # Generate summary with specified parameters
         outputs = t5_model.generate(
             inputs["input_ids"],
             max_length=150,
             min_length=40,
-            length_penalty=2.0,
-            num_beams=4,
+            length_penalty=2.0, # Encourages longer summaries
+            num_beams=4,        # Wider search for better summary
             early_stopping=True
         )
         summary = t5_tokenizer.decode(outputs[0], skip_special_tokens=True)
         return summary
     return "T5 model not loaded. Cannot summarize."
 
+# --- Embedding Generation for ML Model ---
 def get_job_description_embedding(job_description, model):
+    """Generates a numerical embedding for a job description using SentenceTransformer."""
     if model:
         return model.encode(job_description)
     return None
 
+# --- ML Match Prediction ---
 def predict_match_ml(resume_embedding, job_description_embedding, ml_model):
+    """
+    Predicts the match probability between a resume and job description
+    using a pre-trained machine learning model.
+    """
     if ml_model and resume_embedding is not None and job_description_embedding is not None:
-        # Concatenate embeddings for the ML model
+        # Concatenate embeddings to form the feature vector for the ML model
         combined_features = np.concatenate((resume_embedding, job_description_embedding)).reshape(1, -1)
-        prediction_proba = ml_model.predict_proba(combined_features)[0][1] # Probability of being a match (class 1)
+        # Get probability of being a match (class 1)
+        prediction_proba = ml_model.predict_proba(combined_features)[0][1] 
         return prediction_proba
-    return 0.0
+    return 0.0 # Return 0 if models/embeddings are not available
 
-# --- Streamlit UI ---
-st.set_page_config(layout="wide")
-st.title("Resume Screener & Analyzer")
+# --- Streamlit UI Configuration ---
+st.set_page_config(layout="wide", page_title="ScreenerPro – AI Hiring Assistant 🧠")
+st.title("🧠 ScreenerPro – AI Hiring Assistant")
 
+# --- Sidebar for Inputs ---
 st.sidebar.header("Upload Job Description (PDF/TXT)")
 job_description_file = st.sidebar.file_uploader("Upload Job Description", type=["pdf", "txt"], key="jd_upload")
 
@@ -580,7 +605,7 @@ st.sidebar.header("Upload Resumes (PDF)")
 uploaded_resumes = st.sidebar.file_uploader("Upload Resumes", type=["pdf"], accept_multiple_files=True, key="resume_upload")
 
 st.sidebar.header("Target Job Role for Skill Matching")
-# Create a dropdown for job roles based on JOB_SKILLS keys
+# Dropdown for job roles defined in JOB_SKILLS
 selected_job_role = st.sidebar.selectbox(
     "Select a Job Role for Skill Matching:",
     list(JOB_SKILLS.keys())
@@ -588,47 +613,56 @@ selected_job_role = st.sidebar.selectbox(
 
 
 job_description_text = ""
+jd_embedding = None
+jd_skills = []
+
 if job_description_file:
+    # Extract text from JD file
     if job_description_file.type == "application/pdf":
         job_description_text = extract_text_from_pdf(job_description_file)
     else: # text file
         job_description_text = job_description_file.read().decode("utf-8")
+    
     st.sidebar.subheader("Job Description Content (Excerpt)")
-    st.sidebar.text(job_description_text[:500] + "...")
+    st.sidebar.text(job_description_text[:500] + "...") # Show first 500 chars
 
-    jd_skills = extract_skills_from_text(job_description_text)
-    jd_embedding = get_job_description_embedding(job_description_text, model)
+    # Process JD for skills and embeddings if models loaded
+    if model:
+        jd_skills = extract_skills_from_text(job_description_text)
+        jd_embedding = get_job_description_embedding(job_description_text, model)
 else:
     st.warning("Please upload a Job Description to proceed.")
-    jd_skills = []
-    jd_embedding = None
 
-st.markdown("---")
 
+st.markdown("---") # Visual separator in the main content area
+
+# --- Main Content Area for Resume Analysis ---
 if uploaded_resumes and job_description_file:
     st.subheader("Uploaded Resumes Analysis")
-    results = []
+    results = [] # To store results for all resumes
 
     if model and ml_model and t5_tokenizer and t5_model:
         for i, resume_file in enumerate(uploaded_resumes):
             st.markdown(f"#### Analyzing: {resume_file.name}")
             resume_text = extract_text_from_pdf(resume_file)
             
-            # --- Extract Skills ---
+            # --- Extract Skills from Resume ---
             resume_skills = extract_skills_from_text(resume_text)
             st.write(f"**Extracted Skills:** {', '.join(resume_skills) if resume_skills else 'No specific skills found.'}")
 
-            # --- Calculate Skill Match (New Logic) ---
+            # --- Calculate Skill Match based on Selected Job Role ---
             target_skills_for_role = JOB_SKILLS_LOWER.get(selected_job_role, set())
             
+            skill_match_percentage = 0
+            matched_skills = set()
+            missing_skills = set()
+
             if target_skills_for_role:
-                # Lowercase resume skills for consistent comparison
-                resume_skills_lower = {skill.lower() for skill in resume_skills}
+                resume_skills_lower = {skill.lower() for skill in resume_skills} # Convert extracted skills to lowercase
                 
                 matched_skills = resume_skills_lower.intersection(target_skills_for_role)
                 missing_skills = target_skills_for_role.difference(resume_skills_lower)
                 
-                skill_match_percentage = 0
                 if target_skills_for_role: # Avoid division by zero
                     skill_match_percentage = (len(matched_skills) / len(target_skills_for_role)) * 100
                 
@@ -640,16 +674,16 @@ if uploaded_resumes and job_description_file:
             else:
                 st.info(f"No specific skill requirements defined for '{selected_job_role}'.")
             
-            # --- Generate Embedding and Predict Match ---
+            # --- Generate Embedding for Resume and Predict ML Match ---
             resume_embedding = model.encode(resume_text)
             match_proba = predict_match_ml(resume_embedding, jd_embedding, ml_model)
-            st.write(f"**ML Match Probability:** {match_proba:.2%}")
+            st.write(f"**AI Similarity Score (ML Match Probability):** {match_proba:.2%}")
 
-            # --- Summarize Resume ---
+            # --- Summarize Resume using T5 Model ---
             summary = summarize_resume_t5(resume_text, t5_tokenizer, t5_model)
             st.write(f"**Resume Summary:** {summary}")
 
-            # --- Display Word Cloud and Skill Chart ---
+            # --- Display Visualizations (Word Cloud & Bar Chart) ---
             col1, col2 = st.columns(2)
             with col1:
                 st.subheader("Skills Word Cloud")
@@ -658,9 +692,10 @@ if uploaded_resumes and job_description_file:
                 st.subheader("Skills Bar Chart")
                 generate_skills_chart(resume_skills)
 
+            # Store results for the final DataFrame
             results.append({
                 "Resume Name": resume_file.name,
-                "ML Match Probability": f"{match_proba:.2%}",
+                "AI Similarity Score": f"{match_proba:.2%}",
                 "Skill Match (%)": f"{skill_match_percentage:.2f}%",
                 "Extracted Skills": ", ".join(resume_skills),
                 "Matched Skills": ", ".join(matched_skills) if matched_skills else "N/A",
@@ -668,13 +703,14 @@ if uploaded_resumes and job_description_file:
                 "Resume Summary": summary,
                 "Resume Text": resume_text # Keep full text for potential further use
             })
-            st.markdown("---") # Separator for each resume
+            st.markdown("---") # Separator for each resume in the UI
 
         st.subheader("Overall Resume Screening Results")
+        # Display results in a DataFrame
         results_df = pd.DataFrame(results)
         st.dataframe(results_df[[
             "Resume Name",
-            "ML Match Probability",
+            "AI Similarity Score",
             "Skill Match (%)",
             "Extracted Skills",
             "Matched Skills",
@@ -682,6 +718,7 @@ if uploaded_resumes and job_description_file:
             "Resume Summary"
         ]])
 
+        # Download results as CSV
         csv = results_df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="Download Results as CSV",
@@ -690,7 +727,12 @@ if uploaded_resumes and job_description_file:
             mime="text/csv",
         )
 
+    # Error messages if models fail to load
     elif not (model and ml_model):
         st.error("ML model or SentenceTransformer failed to load. Please check the `ml_screening_model.pkl` file and network connection for Hugging Face models.")
     elif not (t5_tokenizer and t5_model):
         st.error("T5 model failed to load. Please check your network connection for Hugging Face models.")
+elif not job_description_file:
+    st.info("Please upload a Job Description to start screening resumes.")
+elif not uploaded_resumes:
+    st.info("Please upload at least one resume to analyze.")
