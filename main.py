@@ -10,6 +10,14 @@ import os
 import pdfplumber
 import runpy
 
+# --- Initialize session state variables if they don't exist ---
+if 'screening_results_df' not in st.session_state:
+    st.session_state['screening_results_df'] = pd.DataFrame()
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+if 'tab_override' not in st.session_state:
+    st.session_state['tab_override'] = "🏠 Dashboard"
+
 
 # --- Page Config ---
 st.set_page_config(page_title="ScreenerPro – AI Hiring Dashboard", layout="wide", initial_sidebar_state="expanded")
@@ -292,6 +300,13 @@ if tab == "🏠 Dashboard":
             df_results = pd.DataFrame() # Reset df_results if error occurs
     else:
         st.info("No screening results available in this session yet. Please run the Resume Screener.")
+
+    # --- Debugging: Display session state content ---
+    st.markdown("---")
+    st.subheader("Debugging: Current Session State")
+    st.write(st.session_state)
+    st.markdown("---")
+    # --- End Debugging ---
 
 
     col1, col2, col3 = st.columns(3)
