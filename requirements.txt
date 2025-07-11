@@ -13,4 +13,4 @@ simplejson
 google-generativeai
 plotly
 statsmodels 
-
+pypdf
