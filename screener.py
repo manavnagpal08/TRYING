@@ -13,35 +13,22 @@ import collections
 from sklearn.metrics.pairwise import cosine_similarity
 import urllib.parse
 
-import nltk # Keep this import
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet
+# Import SentenceTransformer and T5 specific libraries
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# --- REMOVE all the nltk.download() blocks from here ---
-# st.info("Ensuring NLTK data is available...")
-# try:
-#     nltk.data.find('corpora/stopwords')
-# except:
-#     st.info("Downloading NLTK stopwords...")
-#     nltk.download('stopwords')
-# ... and so on for punkt, wordnet, averaged_perceptron_tagger
-
-# --- Start directly with loading models ---
-# Load Embedding + ML Model
+# --- Load Embedding + ML Model ---
 @st.cache_resource
 def load_ml_model():
     """Loads the SentenceTransformer model for embeddings and a pre-trained ML screening model."""
     try:
+        # Check if model path is correct if deployed
         model = SentenceTransformer("all-MiniLM-L6-v2")
         ml_model = joblib.load("ml_screening_model.pkl") # Ensure this file exists in the same directory
         return model, ml_model
     except Exception as e:
         st.error(f"❌ Error loading models: {e}. Please ensure 'ml_screening_model.pkl' is in the same directory and network is available for SentenceTransformer.")
         return None, None
-
-# ... rest of your code ...
 
 # --- Load T5 Model ---
 @st.cache_resource
@@ -62,27 +49,8 @@ def load_t5_model():
 model, ml_model = load_ml_model()
 t5_tokenizer, t5_model = load_t5_model()
 
-# Initialize Lemmatizer for NLTK
-lemmatizer = WordNetLemmatizer()
-
-# --- Helper function to map NLTK POS tags to WordNetLemmatizer tags ---
-def get_wordnet_pos(treebank_tag):
-    """Maps NLTK's Part-of-Speech tags to WordNet's POS tags for lemmatization."""
-    if treebank_tag.startswith('J'):
-        return wordnet.ADJ
-    elif treebank_tag.startswith('V'):
-        return wordnet.VERB
-    elif treebank_tag.startswith('N'):
-        return wordnet.NOUN
-    elif treebank_tag.startswith('R'):
-        return wordnet.ADV
-    else:
-        return wordnet.NOUN # Default to noun if no clear tag
-
-
-# --- Stop Words List (Using NLTK + Custom) ---
-NLTK_STOP_WORDS = set(nltk.corpus.stopwords.words('english'))
-# Comprehensive list of words to be filtered out because they are typically not skills
+# --- Stop Words List (Custom) ---
+# Filter out common words that are not skills
 CUSTOM_STOP_WORDS = set([
     "work", "experience", "years", "year", "months", "month", "day", "days", "project", "projects",
     "team", "teams", "developed", "managed", "led", "created", "implemented", "designed",
@@ -150,9 +118,143 @@ CUSTOM_STOP_WORDS = set([
     "mercurial", "trello", "asana", "monday.com", "smartsheet", "project", "primavera",
     "zendesk", "freshdesk", "itil", "cobit", "prince2", "pmp", "master", "owner", "lean",
     "six", "sigma", "black", "belt", "green", "yellow", "qms", "9001", "27001",
+    # General words that might appear in "skills" section but aren't actual skills
+    "skills", "skill", "improve", "improving", "ability", "abilities", "knowledge", "proficient",
+    "expertise", "experience", "experienced", "background", "capabilities", "competencies",
+    "competency", "develop", "developing", "developed", "learn", "learning", "mastery",
+    "understanding", "areas", "area", "technical", "soft", "communication", "leadership",
+    "problem-solving", "critical-thinking", "adaptability", "creativity", "teamwork", "collaboration",
+    "interpersonal", "organizational", "management", "strategic", "tactical", "operational",
+    "excellent", "strong", "good", "basic", "intermediate", "advanced", "proficient",
+    "demonstrated", "proven", "track record", "results", "driven", "achievements", "accomplishments",
+    "responsibilities", "duties", "tasks", "roles", "role", "key", "summary", "profile",
+    "objective", "education", "certifications", "awards", "honors", "publications", "interests",
+    "references", "portfolio", "contact", "phone", "email", "linkedin", "github", "website",
+    "address", "city", "state", "zip", "country", "national", "international", "global",
+    "remote", "hybrid", "onsite", "full-time", "part-time", "contract", "freelance", "internship",
+    "volunteer", "education", "degree", "bachelor", "master", "phd", "university", "college",
+    "institute", "school", "major", "minor", "gpa", "course", "courses", "class", "classes",
+    "project", "projects", "thesis", "dissertation", "research", "paper", "papers", "journal",
+    "journals", "conference", "conferences", "presentation", "presentations", "workshop", "workshops",
+    "seminar", "seminars", "training", "trainings", "certification", "certifications", "license",
+    "licenses", "award", "awards", "honor", "honors", "distinction", "distinctions", "scholarship",
+    "scholarships", "fellowship", "fellowships", "grant", "grants", "patent", "patents",
+    "publication", "publications", "article", "articles", "book", "books", "chapter", "chapters",
+    "report", "reports", "manual", "manuals", "guide", "guides", "documentation", "documentations",
+    "technical report", "white paper", "case study", "case studies", "solution architect",
+    "data scientist", "machine learning engineer", "software developer", "devops engineer",
+    "cloud engineer", "cybersecurity analyst", "product manager", "project manager",
+    "business analyst", "marketing manager", "sales manager", "hr manager", "financial analyst",
+    "accountant", "auditor", "consultant", "director", "manager", "lead", "senior", "junior",
+    "associate", "specialist", "coordinator", "assistant", "intern", "engineer", "analyst",
+    "architect", "strategist", "expert", "professional", "consultant", "advisor", "officer",
+    "executive", "president", "vice president", "ceo", "cto", "cfo", "coo", "chief", "head",
+    "group", "division", "department", "unit", "section", "team", "office", "company", "corporation",
+    "inc", "ltd", "llc", "corp", "group", "holdings", "solutions", "services", "technologies",
+    "systems", "consulting", "advisory", "management", "financial", "digital", "global",
+    "international", "national", "regional", "local", "public", "private", "government",
+    "non-profit", "startup", "mid-size", "enterprise", "fortune", "global", "innovative",
+    "cutting-edge", "leading", "pioneering", "transformative", "disruptive", "scalable",
+    "robust", "reliable", "secure", "efficient", "effective", "optimized", "automated",
+    "integrated", "seamless", "user-friendly", "intuitive", "responsive", "dynamic",
+    "interactive", "engaging", "compelling", "impactful", "sustainable", "ethical",
+    "compliant", "governance", "risk", "compliance", "regulatory", "standard", "standards",
+    "best practices", "methodology", "methodologies", "process", "processes", "procedure",
+    "procedures", "guideline", "guidelines", "framework", "frameworks", "tool", "tools",
+    "technology", "technologies", "platform", "platforms", "solution", "solutions",
+    "system", "systems", "architecture", "design", "development", "implementation",
+    "deployment", "maintenance", "support", "operations", "monitoring", "analysis",
+    "reporting", "visualization", "dashboard", "dashboards", "metrics", "kpis", "performance",
+    "optimization", "automation", "integration", "migration", "transformation", "upgrade",
+    "update", "patch", "patches", "troubleshooting", "debugging", "testing", "quality",
+    "assurance", "control", "auditing", "compliance", "security", "privacy", "data",
+    "information", "analytics", "intelligence", "insight", "insights", "strategy",
+    "planning", "execution", "management", "leadership", "mentoring", "coaching",
+    "training", "development", "recruitment", "hiring", "onboarding", "retention",
+    "employee", "engagement", "relations", "compensation", "benefits", "payroll",
+    "hr", "human resources", "talent acquisition", "talent management", "workforce",
+    "diversity", "inclusion", "equity", "belonging", "csr", "sustainability", "environmental",
+    "social", "governance", "ethics", "integrity", "professionalism", "communication",
+    "presentation", "negotiation", "collaboration", "teamwork", "interpersonal",
+    "problem solving", "critical thinking", "analytical", "creative", "innovative",
+    "adaptable", "flexible", "resilient", "organized", "detail-oriented", "proactive",
+    "self-starter", "independent", "results-driven", "client-facing", "stakeholder management",
+    "vendor management", "budget management", "cost reduction", "process improvement",
+    "standardization", "quality management", "project management", "program management",
+    "portfolio management", "agile", "scrum", "kanban", "waterfall", "lean", "six sigma",
+    "pmp", "prince2", "itil", "cobit", "cism", "cissp", "ceh", "security+", "network+",
+    "a+", "linux+", "ccna", "ccnp", "ccie", "aws", "azure", "gcp", "certified",
+    "developer", "architect", "sysops", "administrator", "specialty", "professional",
+    "expert", "master", "principal", "distinguished", "fellow", "senior staff", "staff",
+    "junior staff", "associate staff", "intern", "co-op", "trainee", "apprentice",
+    "volunteer", "pro-bono", "freelance", "contract", "temp", "full-time", "part-time",
+    "casual", "seasonal", "gig", "remote", "hybrid", "onsite", "in-office", "field-based",
+    "travel", "relocation", "visa sponsorship", "eligible to work", "right to work",
+    "driver's license", "car", "own transport", "flexible hours", "on-call", "shift work",
+    "overtime", "weekend work", "public holidays", "bank holidays", "paid leave",
+    "unpaid leave", "sick leave", "maternity leave", "paternity leave", "parental leave",
+    "bereavement leave", "sabbatical", "retirement", "pension", "superannuation",
+    "health insurance", "dental insurance", "vision insurance", "life insurance",
+    "disability insurance", "critical illness", "employee assistance program", "eap",
+    "wellness program", "gym membership", "subsidized meals", "company car", "mobile phone",
+    "laptop", "home office allowance", "training budget", "professional development",
+    "mentorship", "coaching", "career progression", "internal mobility", "job rotation",
+    "secondment", "tuition reimbursement", "education assistance", "student loan repayment",
+    "childcare vouchers", "cycle to work", "share options", "stock options", "equity",
+    "bonus", "commission", "profit share", "salary", "wage", "remuneration", "package",
+    "compensation", "benefits", "perks", "allowances", "expenses", "reimbursement",
+    "tax-efficient", "salary sacrifice", "pension contributions", "medical aid",
+    "401k", "403b", "457", "ira", "roth ira", "sep ira", "simple ira", "espp", "rsu",
+    "ltdi", "stdi", "adr", "arbitration", "mediation", "grievance", "disciplinary",
+    "code of conduct", "ethics policy", "confidentiality agreement", "nda", "non-compete",
+    "non-solicitation", "ip assignment", "offer letter", "contract of employment",
+    "employee handbook", "company policy", "procedure manual", "compliance training",
+    "health and safety", "hse", "ohs", "osh", "ergonomics", "fire safety", "first aid",
+    "incident reporting", "accident investigation", "risk assessment", "hazard identification",
+    "safe work procedures", "emergency preparedness", "business continuity", "disaster recovery",
+    "crisis management", "crisis communication", "public relations", "media relations",
+    "investor relations", "shareholder relations", "government relations", "lobbying",
+    "community relations", "corporate social responsibility", "csr report", "sustainability report",
+    "environmental impact", "carbon footprint", "waste management", "recycling", "renewable energy",
+    "green initiatives", "eco-friendly", "fair trade", "ethical sourcing", "supply chain ethics",
+    "human rights", "labor practices", "child labor", "forced labor", "modern slavery",
+    "equal opportunity", "affirmative action", "diversity and inclusion", "unconscious bias",
+    "harassment prevention", "discrimination prevention", "grievance procedure", "whistleblowing",
+    "internal audit", "external audit", "financial audit", "operational audit", "compliance audit",
+    "it audit", "security audit", "quality audit", "environmental audit", "social audit",
+    "due diligence", "mergers and acquisitions", "m&a", "divestitures", "joint ventures",
+    "strategic alliances", "partnerships", "outsourcing", "insourcing", "offshoring",
+    "nearshoring", "reshoring", "vendor management", "supplier relationship management",
+    "contract negotiation", "contract management", "procurement", "purchasing", "sourcing",
+    "logistics", "supply chain", "inventory management", "warehouse management",
+    "transportation management", "fleet management", "route optimization", "demand planning",
+    "forecasting", "production planning", "manufacturing execution system", "mes",
+    "enterprise resource planning", "erp", "customer relationship management", "crm",
+    "supply chain management", "scm", "human capital management", "hcm", "financial management",
+    "accounting software", "payroll software", "hr software", "crm software", "erp software",
+    "project management software", "collaboration tools", "communication tools",
+    "video conferencing", "web conferencing", "document management", "content management",
+    "knowledge management", "business intelligence", "bi", "data warehousing", "data lakes",
+    "data marts", "etl", "data integration", "data governance", "data quality", "data migration",
+    "data modeling", "data architecture", "database administration", "dba", "sql", "nosql",
+    "data science", "machine learning", "deep learning", "artificial intelligence", "ai",
+    "natural language processing", "nlp", "computer vision", "cv", "predictive analytics",
+    "prescriptive analytics", "descriptive analytics", "statistical analysis", "data mining",
+    "big data", "hadoop", "spark", "kafka", "tableau", "power bi", "qlikview", "excel",
+    "r", "python", "sas", "spss", "matlab", "stata", "azure machine learning",
+    "aws sagemaker", "google ai platform", "tensorflow", "pytorch", "keras", "scikit-learn",
+    "xgboost", "lightgbm", "catboost", "statsmodels", "numpy", "pandas",
+    "matplotlib", "seaborn", "plotly", "bokeh", "dash", "flask", "django", "fastapi", "spring",
+    "boot", ".net", "core", "node.js", "express.js", "react", "angular", "vue.js", "svelte",
+    "jquery", "bootstrap", "tailwind", "sass", "less", "webpack", "babel", "npm", "yarn",
+    "ansible", "terraform", "jenkins", "gitlab", "github", "actions", "codebuild", "codepipeline",
+    "codedeploy", "build", "deploy", "run", "lambda", "functions", "serverless", "microservices",
+    "gateway", "mesh", "istio", "linkerd", "grpc", "restful", "soap", "message", "queues",
+    "rabbitmq", "activemq", "bus", "sqs", "sns", "pubsub", "version", "control", "svn",
+    "mercurial", "trello", "asana", "monday.com", "smartsheet", "project", "primavera",
+    "zendesk", "freshdesk", "itil", "cobit", "prince2", "pmp", "master", "owner", "lean",
+    "six", "sigma", "black", "belt", "green", "yellow", "qms", "9001", "27001",
 ]) # Make sure this list is truly comprehensive as per our prior discussions
-
-ALL_STOP_WORDS = NLTK_STOP_WORDS.union(CUSTOM_STOP_WORDS)
 
 # --- MASTER SKILLS DICTIONARY ---
 # This is your comprehensive list of all potential skills.
@@ -238,121 +340,42 @@ all_skills_master = {
 }
 
 # Convert all_skills_master to a set for faster lookup and uniform case
+# Also create a list of sorted skills (longest first) for multi-word matching
 ALL_SKILLS_MASTER_SET = {skill.lower() for skill in all_skills_master}
+SORTED_MASTER_SKILLS = sorted(list(ALL_SKILLS_MASTER_SET), key=len, reverse=True)
 
 
-# --- JOB-SPECIFIC REQUIRED SKILLS DICTIONARIES ---
-# Define required skills for various job roles using the ALL_SKILLS_MASTER_SET
-# These are the skills we EXPECT to see for a good match.
-
-JOB_SKILLS = {
-    "Software Engineer": {
-        "Python", "Java", "JavaScript", "React", "Angular", "Vue", "Git", "GitHub", "REST APIs", "DevOps",
-        "Docker", "Kubernetes", "Microservices Architecture", "Object-Oriented Programming", "System Design",
-        "Unit Testing", "Software Architecture", "CI/CD", "C++", "C#", "HTML", "CSS", "SQL", "PostgreSQL", "MySQL"
-    },
-    "Data Scientist": {
-        "Python", "Machine Learning", "Deep Learning", "Natural Language Processing", "Computer Vision",
-        "Scikit-learn", "TensorFlow", "PyTorch", "Data Cleaning", "Feature Engineering", "Regression",
-        "Classification", "Clustering", "Neural Networks", "Time Series Analysis", "Data Visualization",
-        "Pandas", "NumPy", "Matplotlib", "Seaborn", "SQL", "BigQuery", "LLMs", "Prompt Engineering"
-    },
-    "Product Manager": {
-        "Product Strategy", "Roadmap Development", "Agile Methodologies", "Scrum", "Kanban", "Jira",
-        "Feature Prioritization", "OKRs", "KPIs", "Stakeholder Management", "A/B Testing", "User Stories",
-        "Product Lifecycle", "MVP", "Backlog Grooming", "UX Research", "Business Analysis", "Gantt Charts"
-    },
-    "Data Analyst": {
-        "SQL", "Excel", "Power BI", "Tableau", "Looker", "Google Data Studio", "Data Cleaning", "Data Visualization",
-        "Statistical Analysis", "Google Analytics", "Business Analysis", "ETL", "Data Modeling"
-    },
-    "DevOps Engineer": {
-        "DevOps", "CI/CD", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Terraform", "Linux",
-        "Shell Scripting", "Monitoring", "Datadog", "Prometheus", "Grafana", "Git", "GitHub", "GitLab",
-        "Serverless Architecture", "Ansible", "Jenkins"
-    },
-    "Marketing Specialist": {
-        "Digital Marketing", "SEO", "SEM", "Google Ads", "Facebook Ads", "Email Marketing", "Growth Hacking",
-        "Marketing Analytics", "Content Strategy", "HubSpot", "Salesforce CRM", "Lead Generation", "Campaign Management",
-        "Conversion Optimization", "CRM", "Sales Strategy", "Negotiation", "Cold Calling", "Brand Management"
-    },
-    "HR Manager": {
-        "Recruitment", "Onboarding", "Employee Relations", "Payroll", "Compensation and Benefits", "HRIS",
-        "HR Policies", "Performance Management", "Talent Acquisition", "Workforce Planning", "Labor Law Compliance",
-        "Training & Development", "Strategic Planning", "Change Management"
-    },
-    "UI/UX Designer": {
-        "Figma", "Adobe XD", "Sketch", "Illustrator", "Design Thinking", "Wireframing", "UX Research",
-        "Prototyping", "Accessibility", "Responsive Design", "Material UI", "Bootstrap", "User Stories"
-    },
-    "Cybersecurity Analyst": {
-        "Network Security", "Vulnerability Scanning", "Penetration Testing", "IAM", "SIEM", "Splunk",
-        "QRadar", "Encryption", "Firewalls", "Incident Response", "Active Directory", "ITIL", "Healthcare Compliance", "HIPAA"
-    },
-    "Financial Analyst": {
-        "Financial Analysis", "Budgeting", "Forecasting", "Excel", "Financial Reporting", "Cost Accounting",
-        "ERP", "GAAP", "Auditing", "Statistical Analysis"
-    },
-    "Customer Service Rep": {
-        "Customer Relationship Management", "Call Handling", "Issue Resolution", "Zendesk",
-        "Live Chat Support", "Ticketing Systems", "Email Communication", "Scheduling"
-    }
-}
-
-# Convert all skills in JOB_SKILLS to lowercase for robust matching
-JOB_SKILLS_LOWER = {
-    job_role: {skill.lower() for skill in skills_set}
-    for job_role, skills_set in JOB_SKILLS.items()
-}
-
-
-# --- Keyword Extraction Function (Enhanced) ---
+# --- Skill Extraction Function (NLTK-free) ---
 def extract_skills_from_text(text):
     """
-    Extracts relevant skills from a given text using multi-word matching,
-    lemmatization, POS tagging, and stop word filtering.
+    Extracts relevant skills from a given text using multi-word matching and
+    stop word filtering, without NLTK.
     """
-    text = text.lower()
-    
-    # Use NLTK for tokenization and POS tagging
-    tokens = nltk.word_tokenize(text) # This is the line that caused LookupError
-    tagged_tokens = nltk.pos_tag(tokens)
-
+    text_lower = text.lower()
     extracted_skills = set()
     
-    # First, try to match multi-word skills (bi-grams, tri-grams from all_skills_master)
-    # Iterate through skills_master sorted by length (descending) to prioritize longer matches
-    sorted_master_skills = sorted(list(ALL_SKILLS_MASTER_SET), key=len, reverse=True)
+    # First, try to match multi-word skills (longest first)
+    for skill_phrase in SORTED_MASTER_SKILLS:
+        if ' ' in skill_phrase: # Only consider multi-word phrases here
+            # Use word boundaries to ensure whole word match
+            pattern = r'\b' + re.escape(skill_phrase) + r'\b'
+            if re.search(pattern, text_lower):
+                extracted_skills.add(skill_phrase)
+                # Replace matched skill with placeholders to avoid re-matching its components
+                text_lower = re.sub(pattern, ' ' * len(skill_phrase), text_lower)
 
-    # Use a copy of the text to mark out matched skills, preventing partial matches
-    processed_text = text 
-    for skill in sorted_master_skills:
-        # Create a regex pattern for the multi-word skill to find it in the text
-        # Use word boundaries (\b) to match whole words and re.escape for special characters
-        pattern = r'\b' + re.escape(skill) + r'\b'
-        if re.search(pattern, processed_text):
-            extracted_skills.add(skill)
-            # Replace matched skill with placeholders to avoid re-matching its components later
-            # Replace with spaces to maintain word boundaries for subsequent single-word tokenization
-            processed_text = re.sub(pattern, ' ' * len(skill), processed_text) # Replace with spaces of same length
+    # Now process the remaining text for single words
+    # Tokenize by non-alphanumeric characters (simple splitting, no NLTK)
+    single_words = re.findall(r'\b[a-z]+\b', text_lower) # Matches only alphabetic words
 
-    # Now process the remaining text for single words, after multi-words are extracted
-    # Re-tokenize and tag the processed_text
-    tokens_remaining = nltk.word_tokenize(processed_text)
-    tagged_tokens_remaining = nltk.pos_tag(tokens_remaining)
-    
-    for word, tag in tagged_tokens_remaining:
-        # Lemmatize the word
-        pos = get_wordnet_pos(tag)
-        lemma = lemmatizer.lemmatize(word, pos)
-
-        # Basic filtering: numeric, short, stop words
-        if not lemma.isalpha() or len(lemma) < 2 or lemma in ALL_STOP_WORDS:
+    for word in single_words:
+        # Basic filtering: short or stop words
+        if len(word) < 2 or word in CUSTOM_STOP_WORDS:
             continue
-
-        # Check if the lemmatized word is in our master skill list
-        if lemma in ALL_SKILLS_MASTER_SET:
-            extracted_skills.add(lemma)
+        
+        # Check if the word is in our master skill list
+        if word in ALL_SKILLS_MASTER_SET:
+            extracted_skills.add(word)
             
     return list(extracted_skills)
 
@@ -436,23 +459,16 @@ def predict_match_ml(resume_embedding, job_description_embedding, ml_model):
 st.set_page_config(layout="wide", page_title="ScreenerPro – AI Hiring Assistant 🧠")
 st.title("🧠 ScreenerPro – AI Hiring Assistant")
 
-# --- UI Elements - NO SIDEBAR ---
+# --- UI Elements ---
 st.header("1. Upload Job Description (PDF/TXT)")
 job_description_file = st.file_uploader("Upload Job Description", type=["pdf", "txt"], key="jd_upload")
 
 st.header("2. Upload Resumes (PDF)")
 uploaded_resumes = st.file_uploader("Upload Resumes", type=["pdf"], accept_multiple_files=True, key="resume_upload")
 
-st.header("3. Select Target Job Role for Skill Matching")
-selected_job_role = st.selectbox(
-    "Select a Job Role for Skill Matching:",
-    list(JOB_SKILLS.keys())
-)
-
-
 job_description_text = ""
 jd_embedding = None
-jd_skills = []
+jd_skills = [] # This will hold the target skills from the JD
 
 if job_description_file:
     # Extract text from JD file
@@ -468,8 +484,11 @@ if job_description_file:
     if model:
         jd_skills = extract_skills_from_text(job_description_text)
         jd_embedding = get_job_description_embedding(job_description_text, model)
+    
+    if not jd_skills:
+        st.warning("No specific skills found in the uploaded Job Description. Skill matching might be less effective.")
 else:
-    st.warning("Please upload a Job Description to proceed.")
+    st.warning("Please upload a Job Description to proceed with skill matching and resume analysis.")
 
 
 st.markdown("---") # Visual separator in the main content area
@@ -480,42 +499,50 @@ if uploaded_resumes and job_description_file:
     results = [] # To store results for all resumes
 
     if model and ml_model and t5_tokenizer and t5_model:
+        if not jd_embedding:
+            st.error("Could not generate embedding for the Job Description. AI Similarity Score will not be available.")
+        
         for i, resume_file in enumerate(uploaded_resumes):
             st.markdown(f"#### Analyzing: {resume_file.name}")
             resume_text = extract_text_from_pdf(resume_file)
             
             # --- Extract Skills from Resume ---
             resume_skills = extract_skills_from_text(resume_text)
-            st.write(f"**Extracted Skills:** {', '. join(resume_skills) if resume_skills else 'No specific skills found.'}")
+            st.write(f"**Extracted Skills:** {', '.join(resume_skills) if resume_skills else 'No specific skills found.'}")
 
-            # --- Calculate Skill Match based on Selected Job Role ---
-            target_skills_for_role = JOB_SKILLS_LOWER.get(selected_job_role, set())
-            
+            # --- Calculate Skill Match based on Extracted JD Skills ---
             skill_match_percentage = 0
             matched_skills = set()
             missing_skills = set()
 
-            if target_skills_for_role:
-                resume_skills_lower = {skill.lower() for skill in resume_skills} # Convert extracted skills to lowercase
+            # The target skills are now directly from the JD
+            target_skills_from_jd = {skill.lower() for skill in jd_skills} # Ensure JD skills are lowercase for comparison
+            
+            if target_skills_from_jd: # Only calculate if JD skills were found
+                resume_skills_lower = {skill.lower() for skill in resume_skills} # Convert extracted resume skills to lowercase
                 
-                matched_skills = resume_skills_lower.intersection(target_skills_for_role)
-                missing_skills = target_skills_for_role.difference(resume_skills_lower)
+                matched_skills = resume_skills_lower.intersection(target_skills_from_jd)
+                missing_skills = target_skills_from_jd.difference(resume_skills_lower)
                 
-                if target_skills_for_role: # Avoid division by zero
-                    skill_match_percentage = (len(matched_skills) / len(target_skills_for_role)) * 100
+                if target_skills_from_jd: # Avoid division by zero
+                    skill_match_percentage = (len(matched_skills) / len(target_skills_from_jd)) * 100
                 
-                st.write(f"**Skill Match for '{selected_job_role}':** {skill_match_percentage:.2f}%")
+                st.write(f"**Skill Match to Job Description:** {skill_match_percentage:.2f}%")
                 if matched_skills:
                     st.write(f"**Matched Skills:** {', '.join(sorted(list(matched_skills)))}")
                 if missing_skills:
-                    st.write(f"**Missing Skills for Role:** {', '.join(sorted(list(missing_skills)))}")
+                    st.write(f"**Missing Skills from Job Description:** {', '.join(sorted(list(missing_skills)))}")
             else:
-                st.info(f"No specific skill requirements defined for '{selected_job_role}'.")
+                st.info("No target skills extracted from the Job Description for matching.")
             
             # --- Generate Embedding for Resume and Predict ML Match ---
-            resume_embedding = model.encode(resume_text)
-            match_proba = predict_match_ml(resume_embedding, jd_embedding, ml_model)
-            st.write(f"**AI Similarity Score (ML Match Probability):** {match_proba:.2%}")
+            match_proba = 0.0
+            if jd_embedding is not None:
+                resume_embedding = model.encode(resume_text)
+                match_proba = predict_match_ml(resume_embedding, jd_embedding, ml_model)
+                st.write(f"**AI Similarity Score (ML Match Probability):** {match_proba:.2%}")
+            else:
+                st.info("AI Similarity Score not available without Job Description embedding.")
 
             # --- Summarize Resume using T5 Model ---
             summary = summarize_resume_t5(resume_text, t5_tokenizer, t5_model)
