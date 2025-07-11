@@ -13,48 +13,23 @@ import collections
 from sklearn.metrics.pairwise import cosine_similarity
 import urllib.parse
 
-# Import NLTK *before* SentenceTransformer and T5, just for download
-import nltk
-
-# --- NLTK Data Downloads (FORCED at the very beginning) ---
-# This ensures NLTK data is downloaded and available.
-# st.info messages will show progress in Streamlit Cloud logs/UI.
-# No try-except for LookupError here, as we want to force the download if missing.
-st.info("Ensuring NLTK data is available...")
-try:
-    nltk.data.find('corpora/stopwords')
-except:
-    st.info("Downloading NLTK stopwords...")
-    nltk.download('stopwords')
-
-try:
-    nltk.data.find('corpora/wordnet')
-except:
-    st.info("Downloading NLTK wordnet...")
-    nltk.download('wordnet')
-
-try:
-    nltk.data.find('taggers/averaged_perceptron_tagger')
-except:
-    st.info("Downloading NLTK averaged_perceptron_tagger...")
-    nltk.download('averaged_perceptron_tagger')
-
-try:
-    nltk.data.find('tokenizers/punkt')
-except:
-    st.info("Downloading NLTK punkt tokenizer...")
-    nltk.download('punkt')
-
-st.success("NLTK data checks complete.")
-
-# Now import modules that rely on NLTK data
+import nltk # Keep this import
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
+# --- REMOVE all the nltk.download() blocks from here ---
+# st.info("Ensuring NLTK data is available...")
+# try:
+#     nltk.data.find('corpora/stopwords')
+# except:
+#     st.info("Downloading NLTK stopwords...")
+#     nltk.download('stopwords')
+# ... and so on for punkt, wordnet, averaged_perceptron_tagger
 
-# --- Load Embedding + ML Model ---
+# --- Start directly with loading models ---
+# Load Embedding + ML Model
 @st.cache_resource
 def load_ml_model():
     """Loads the SentenceTransformer model for embeddings and a pre-trained ML screening model."""
@@ -65,6 +40,8 @@ def load_ml_model():
     except Exception as e:
         st.error(f"❌ Error loading models: {e}. Please ensure 'ml_screening_model.pkl' is in the same directory and network is available for SentenceTransformer.")
         return None, None
+
+# ... rest of your code ...
 
 # --- Load T5 Model ---
 @st.cache_resource
