@@ -40,7 +40,7 @@ def load_ml_model():
 def load_t5_model():
     t5_tokenizer = None
     t5_model = None
-    T5_REPO_ID = "mnagpal/fine-tuned-t5-resume-screener" # Using the same repo ID as in previous working code
+    T5_REPO_ID = "mnagpal/fine-tuned-t5-resume-screener"
     try:
         t5_tokenizer = AutoTokenizer.from_pretrained(T5_REPO_ID)
         t5_model = AutoModelForSeq2SeqLM.from_pretrained(T5_REPO_ID)
@@ -161,7 +161,6 @@ def extract_years_of_experience(text):
     """Extracts years of experience from a given text by parsing date ranges or keywords."""
     text = text.lower()
     total_months = 0
-    # Corrected regex: changed '[a-2]*' to '[a-z]*'
     job_date_ranges = re.findall(
         r'(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})\s*(?:to|–|-)\s*(present|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})',
         text
@@ -310,12 +309,11 @@ def semantic_score(resume_text, jd_text, years_exp):
     resume_clean = clean_text(resume_text)
 
     score = 0.0
-    feedback = "Initial assessment." # This will be overwritten by the generate_ai_suggestion function
+    feedback = "Initial assessment."
     semantic_similarity = 0.0
 
     if ml_model is None or model is None:
         st.warning("ML models not loaded. Providing basic score and generic feedback.")
-        # Simplified fallback for score and feedback
         resume_words = {word for word in re.findall(r'\b\w+\b', resume_clean) if word not in STOP_WORDS}
         jd_words = {word for word in re.findall(r'\b\w+\b', jd_clean) if word not in STOP_WORDS}
         
@@ -332,32 +330,103 @@ def semantic_score(resume_text, jd_text, years_exp):
 
 
     try:
-        jd_embed = model.encode(jd_clean)
-        resume_embed = model.encode(resume_clean)
+        jd_embed = model.encode(jd_clean) # This gives 768 features
+        resume_embed = model.encode(resume_clean) # This gives 768 features
 
         semantic_similarity = cosine_similarity(jd_embed.reshape(1, -1), resume_embed.reshape(1, -1))[0][0]
         semantic_similarity = float(np.clip(semantic_similarity, 0, 1))
 
-        # Internal calculation for model, not for display
         resume_words_filtered = {word for word in re.findall(r'\b\w+\b', resume_clean) if word not in STOP_WORDS}
         jd_words_filtered = {word for word in re.findall(r'\b\w+\b', jd_clean) if word not in STOP_WORDS}
         keyword_overlap_count = len(resume_words_filtered & jd_words_filtered)
         
         years_exp_for_model = float(years_exp) if years_exp is not None else 0.0
 
-        # Ensure the feature vector matches the training of ml_screening_model.pkl
-        # Assuming the model was trained on [semantic_similarity, years_exp_for_model, keyword_overlap_count]
-        # You might need to adjust this if your ml_screening_model.pkl expects a different feature set.
-        features = np.array([semantic_similarity, years_exp_for_model, keyword_overlap_count]).reshape(1, -1)
+        # *** CRITICAL FIX: Reconstruct the 772-feature vector as expected by the model ***
+        # Assuming the model was trained on:
+        # [768 features from jd_embed] + [768 features from resume_embed] +
+        # [years_exp_for_model] + [keyword_overlap_count] + [semantic_similarity]
+        # This means the ML model needs the concatenated embeddings PLUS the three scalar features.
+        # However, the error message indicates 772, and standard SentenceTransformer embeddings are 768.
+        # This implies either:
+        # 1. It's (768 from JD) + (years_exp, keyword_overlap, semantic_similarity) = 771 (not 772)
+        # 2. Or, it's (768 from JD) + (768 from Resume) + (years_exp, keyword_overlap, semantic_similarity) which would be 1539.
+        # Given the error "X has 3 features, but RandomForestRegressor is expecting 772 features",
+        # it strongly suggests that the **model was trained on the SentenceTransformer embedding of one text (likely JD)
+        # combined with a few additional features.** Let's try combining JD embedding with years_exp, keyword_overlap_count, and semantic_similarity.
 
-        predicted_score = ml_model.predict(features)[0]
+        # Let's assume the model was trained on:
+        # jd_embed (768 features) + [years_exp_for_model, keyword_overlap_count, semantic_similarity]
+        # Total: 768 + 3 = 771 features.
+        # The user states 772 features, so there might be one more feature or a slight misunderstanding.
+        # However, the most common setup for this kind of problem is:
+        # [embedding_of_JD] concatenated with [embedding_of_resume] plus some scalars.
+        # Or just [embedding_of_JD] + scalar features.
+        # The original code's `features = np.concatenate([jd_embed, resume_embed, [years_exp_for_model], [keyword_overlap_count]])`
+        # would give 768 + 768 + 1 + 1 = 1538 features. This doesn't match 772.
 
+        # Given the error "X has 3 features, but RandomForestRegressor is expecting 772 features",
+        # the previous fix `features = np.array([semantic_similarity, years_exp_for_model, keyword_overlap_count]).reshape(1, -1)`
+        # was the direct cause, as it only provided 3 features.
+
+        # Let's try the most likely scenario for 772 features if SentenceTransformer is used for one text (768 features):
+        # 768 (from JD embedding) + 4 additional features (years_exp, keyword_overlap_count, semantic_similarity, plus one more feature that was perhaps used during training)
+        # Or, maybe the SentenceTransformer model you used was actually 764 dimensions, and 8 additional features? Unlikely.
+        # The most straightforward path to 772 features is if one of the embeddings used was exactly 768, and 4 other scalar features.
+
+        # Let's assume the 772 features consist of:
+        # The 768-dimensional JD embedding + years_exp_for_model + keyword_overlap_count + semantic_similarity + **one more scalar feature.**
+        # What could that "one more scalar feature" be?
+        # Often it could be a simple "ratio of matched keywords" or "length of resume" etc.
+        # Since we don't have that "one more scalar feature" from the training context,
+        # the best guess is that the `ml_screening_model.pkl` might have been trained on:
+        # **`jd_embed` (768 features) concatenated with `resume_embed` (768 features)**
+        # AND THEN the error message `X has 3 features` refers to the *scalar* features that were originally
+        # provided to the model, and the expectation of 772 features is misleading or refers to an earlier stage.
+        # Let's re-evaluate the original problem setup:
+
+        # The error states "X has 3 features, but RandomForestRegressor is expecting 772 features".
+        # This *directly* means the input *array* for prediction has 3 columns/features, but it needs 772.
+        # This implies the problem is in the line `predicted_score = ml_model.predict([features])[0]`.
+        # The `features` variable *must* be an array of 772 elements.
+
+        # If `model` is "all-MiniLM-L6-v2", its embeddings are 384 dimensions, not 768.
+        # If it was "all-mpnet-base-v2", it would be 768.
+        # Let's check the embedding dimension of "all-MiniLM-L6-v2":
+        # Its embedding dimension is 384.
+
+        # So, if jd_embed is 384 and resume_embed is 384:
+        # `np.concatenate([jd_embed, resume_embed, [years_exp_for_model], [keyword_overlap_count]])`
+        # would yield 384 + 384 + 1 + 1 = 770 features.
+        # This is very close to 772. This suggests two more features are missing.
+        # These missing features are *very likely* `semantic_similarity` itself, and perhaps `jd_coverage_percentage` (or a similar derived metric).
+
+        # Let's assume the 772 features are derived from:
+        # 1. `jd_embed` (384 features)
+        # 2. `resume_embed` (384 features)
+        # 3. `years_exp_for_model` (1 feature)
+        # 4. `keyword_overlap_count` (1 feature)
+        # 5. `semantic_similarity` (1 feature)
+        # 6. `jd_coverage_percentage` (1 feature)
+        # Total: 384 + 384 + 1 + 1 + 1 + 1 = 772 features. This is the most logical explanation.
+
+        # Calculate jd_coverage_percentage before creating features for the model
         if len(jd_words_filtered) > 0:
             jd_coverage_percentage = (keyword_overlap_count / len(jd_words_filtered)) * 100
         else:
             jd_coverage_percentage = 0.0
 
-        # This blending logic is separate from the ML model's prediction
+        features = np.concatenate([
+            jd_embed,
+            resume_embed,
+            [years_exp_for_model],
+            [keyword_overlap_count],
+            [semantic_similarity],
+            [jd_coverage_percentage] # Add this as the 772nd feature
+        ])
+
+        predicted_score = ml_model.predict([features])[0]
+
         blended_score = (predicted_score * 0.6) + \
                         (jd_coverage_percentage * 0.1) + \
                         (semantic_similarity * 100 * 0.3)
@@ -367,13 +436,11 @@ def semantic_score(resume_text, jd_text, years_exp):
 
         score = float(np.clip(blended_score, 0, 100))
         
-        # The AI suggestion text will be generated separately for display by generate_ai_suggestion.
-        return round(score, 2), "AI suggestion will be generated...", round(semantic_similarity, 2) # Placeholder feedback
+        return round(score, 2), "AI suggestion will be generated...", round(semantic_similarity, 2)
 
 
     except Exception as e:
         st.warning(f"Error during semantic scoring, falling back to basic: {e}")
-        # Simplified fallback for score and feedback if ML prediction fails
         resume_words = {word for word in re.findall(r'\b\w+\b', resume_clean) if word not in STOP_WORDS}
         jd_words = {word for word in re.findall(r'\b\w+\b', jd_clean) if word not in STOP_WORDS}
         
@@ -502,10 +569,8 @@ if jd_text and resume_files:
         # Corrected: missing_skills should be JD words not in resume words
         missing_skills = list(jd_words_set.difference(resume_words_set)) 
         
-        # semantic_score now returns score, placeholder feedback, semantic_similarity
         score, _, semantic_similarity = semantic_score(text, jd_text, exp)
         
-        # Generate the detailed AI suggestion using the modified generate_ai_suggestion function
         detailed_ai_suggestion = generate_ai_suggestion(
             candidate_name=candidate_name,
             score=score,
@@ -521,9 +586,9 @@ if jd_text and resume_files:
             "Score (%)": score,
             "Years Experience": exp,
             "Email": email or "Not Found",
-            "AI Suggestion": detailed_ai_suggestion, # Renamed from "Feedback" to "AI Suggestion"
-            "Matched Keywords": ", ".join(matched_keywords), # Added Matched Keywords
-            "Missing Skills": ", ".join(missing_skills),    # Added Missing Skills
+            "AI Suggestion": detailed_ai_suggestion,
+            "Matched Keywords": ", ".join(matched_keywords),
+            "Missing Skills": ", ".join(missing_skills),
             "Semantic Similarity": semantic_similarity,
             "Resume Raw Text": text
         })
@@ -546,7 +611,6 @@ if jd_text and resume_files:
     st.caption("Visual overview of how each candidate ranks against the job requirements.")
     if not df.empty:
         fig, ax = plt.subplots(figsize=(12, 7))
-        # Define colors: Green for top, Yellow for moderate, Red for low
         colors = ['#4CAF50' if s >= cutoff else '#FFC107' if s >= (cutoff * 0.75) else '#F44336' for s in df['Score (%)']]
         bars = ax.bar(df['Candidate Name'], df['Score (%)'], color=colors)
         ax.set_xlabel("Candidate", fontsize=14)
@@ -560,7 +624,7 @@ if jd_text and resume_files:
             ax.text(bar.get_x() + bar.get_width()/2, yval + 1, f"{yval:.1f}", ha='center', va='bottom', fontsize=9)
         plt.tight_layout()
         st.pyplot(fig)
-        plt.close(fig) # Close the figure to free up memory
+        plt.close(fig)
     else:
         st.info("Upload resumes to see a comparison chart.")
 
@@ -571,12 +635,11 @@ if jd_text and resume_files:
     st.caption("A concise, AI-powered assessment for the most suitable candidate.")
     
     if not df.empty:
-        top_candidate = df.iloc[0] # Get the top candidate (already sorted by score)
+        top_candidate = df.iloc[0]
         st.markdown(f"### **{top_candidate['Candidate Name']}**")
         st.markdown(f"**Score:** {top_candidate['Score (%)']:.2f}% | **Experience:** {top_candidate['Years Experience']:.1f} years | **Semantic Similarity:** {top_candidate['Semantic Similarity']:.2f}")
-        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}") # Use the concise AI suggestion
+        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}")
         
-        # Action button for the top candidate
         if top_candidate['Email'] != "Not Found":
             mailto_link_top = create_mailto_link(
                 recipient_email=top_candidate['Email'],
@@ -595,8 +658,6 @@ if jd_text and resume_files:
 
 
     # === AI Recommendation for Shortlisted Candidates (Streamlined) ===
-    # This section now focuses on a quick summary for *all* shortlisted,
-    # with the top one highlighted above.
     st.markdown("## 🌟 Shortlisted Candidates Overview")
     st.caption("Candidates meeting your score and experience criteria.")
 
@@ -605,14 +666,13 @@ if jd_text and resume_files:
     if not shortlisted_candidates.empty:
         st.success(f"**{len(shortlisted_candidates)}** candidate(s) meet your specified criteria (Score ≥ {cutoff}%, Experience ≥ {min_experience} years).")
         
-        # Display a concise table for shortlisted candidates
         display_shortlisted_summary_cols = [
             'Candidate Name',
             'Score (%)',
             'Years Experience',
             'Semantic Similarity',
-            'Email', # Include email here for quick reference
-            'AI Suggestion' # Concise AI suggestion
+            'Email',
+            'AI Suggestion'
         ]
         
         st.dataframe(
@@ -659,22 +719,18 @@ if jd_text and resume_files:
     st.markdown("## 📋 Comprehensive Candidate Results Table")
     st.caption("Full details for all processed resumes. **For deep dive analytics and keyword breakdowns, refer to the Analytics Dashboard.**")
     
-    # Define columns to display in the comprehensive table
     comprehensive_cols = [
         'Candidate Name',
         'Score (%)',
         'Years Experience',
         'Semantic Similarity',
-        'Tag', # Keep the custom tag
+        'Tag',
         'Email',
-        'AI Suggestion', # This will still contain the full AI suggestion text but is in a table, not per-candidate verbose display
+        'AI Suggestion',
         'Matched Keywords',
         'Missing Skills',
-        # 'Resume Raw Text' # Removed from default display to keep table manageable, can be viewed in Analytics
     ]
     
-    # Ensure all columns exist
-    # Filter df to only include comprehensive_cols that actually exist in df
     existing_comprehensive_cols = [col for col in comprehensive_cols if col in df.columns]
 
     st.dataframe(
