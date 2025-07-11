@@ -15,3 +15,4 @@ google-generativeai
 plotly
 statsmodels 
 https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.0/en_core_web_md-3.7.0.tar.gz#egg=en_core_web_md
+en_core_web_md
