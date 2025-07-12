@@ -241,23 +241,23 @@ Welcome to ScreenerPro! Upload a Job Description (JD) and multiple resumes to ge
 skill matching, and overall suitability assessments for each candidate.
 """)
 
-# --- Sidebar for Uploads and Settings ---
-st.sidebar.header("Upload Files")
-job_description_file = st.sidebar.file_uploader("Upload Job Description (PDF)", type=["pdf"])
-resume_files = st.sidebar.file_uploader("Upload Resumes (PDFs)", type=["pdf"], accept_multiple_files=True)
+# --- Main Content Area - Uploads and Settings ---
+st.header("Upload Files")
+job_description_file = st.file_uploader("Upload Job Description (PDF)", type=["pdf"])
+resume_files = st.file_uploader("Upload Resumes (PDFs)", type=["pdf"], accept_multiple_files=True)
 
-st.sidebar.header("Settings")
+st.header("Settings")
 # Adjusted tagging thresholds
-tag_threshold_highly_suitable = st.sidebar.slider("Score Threshold for 'Highly Suitable'", 0.7, 1.0, 0.85, 0.01)
-tag_threshold_suitable = st.sidebar.slider("Score Threshold for 'Suitable'", 0.5, 0.8, 0.70, 0.01)
-tag_threshold_needs_review = st.sidebar.slider("Score Threshold for 'Needs Review'", 0.3, 0.6, 0.50, 0.01)
+tag_threshold_highly_suitable = st.slider("Score Threshold for 'Highly Suitable'", 0.7, 1.0, 0.85, 0.01)
+tag_threshold_suitable = st.slider("Score Threshold for 'Suitable'", 0.5, 0.8, 0.70, 0.01)
+tag_threshold_needs_review = st.slider("Score Threshold for 'Needs Review'", 0.3, 0.6, 0.50, 0.01)
 
 # Ensure thresholds are in logical order
 if tag_threshold_suitable >= tag_threshold_highly_suitable:
-    st.sidebar.warning(" 'Suitable' threshold should be less than 'Highly Suitable' threshold.")
+    st.warning(" 'Suitable' threshold should be less than 'Highly Suitable' threshold.")
     tag_threshold_suitable = tag_threshold_highly_suitable - 0.05
 if tag_threshold_needs_review >= tag_threshold_suitable:
-    st.sidebar.warning(" 'Needs Review' threshold should be less than 'Suitable' threshold.")
+    st.warning(" 'Needs Review' threshold should be less than 'Suitable' threshold.")
     tag_threshold_needs_review = tag_threshold_suitable - 0.05
 
 # --- Main Content Area ---
@@ -476,15 +476,15 @@ if job_description_file and resume_files:
 else:
     st.info("Upload a Job Description and Resumes to begin screening.")
 
-# --- About Section (Moved from sidebar to main content) ---
-st.header("About ScreenerPro")
-st.info(
+# --- About Section (Moved back to sidebar) ---
+st.sidebar.title("About ScreenerPro")
+st.sidebar.info(
     "ScreenerPro is an AI-powered application designed to streamline the resume screening "
     "process. It leverages a custom-trained Machine Learning model, a Sentence Transformer for "
     "semantic understanding, and a fine-tuned T5 model for insightful AI suggestions and summarization.\n\n"
     "Upload job descriptions and resumes, and let AI assist you in identifying the best-fit candidates!"
 )
-st.markdown("---")
-st.markdown(
+st.sidebar.markdown("---")
+st.sidebar.markdown(
     "Developed by [Manav Nagpal](https://www.linkedin.com/in/manav-nagpal-b03a743b/)"
 )
