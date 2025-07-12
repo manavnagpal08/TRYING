@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import os
 import joblib
-import numpy as np
+import numpy as np # Ensure numpy is imported for np.nan
 from datetime import datetime
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
@@ -359,8 +359,8 @@ if job_description_file and resume_files:
             results.append({
                 "Resume Name": resume_file.name,
                 "Experience (Years)": experience,
-                "Similarity Score": f"{similarity_score:.2f}",
-                "ML Prediction Probability": f"{ml_prediction_proba:.2f}" if ml_prediction_proba is not None else "N/A",
+                "Similarity Score": similarity_score, # Changed to float directly
+                "ML Prediction Probability": ml_prediction_proba if ml_prediction_proba is not None else np.nan, # Changed to np.nan for ProgressColumn
                 "Tag": ml_tag,
                 "AI Suggestion": ai_suggestion,
                 "Overall Assessment and Recommendation": ai_overall_assessment,
@@ -450,8 +450,8 @@ if job_description_file and resume_files:
         for idx, row in df.iterrows():
             with st.expander(f"View Details for: {row['Resume Name']}"):
                 st.write(f"**Experience (Years):** {row['Experience (Years)']}")
-                st.write(f"**Similarity Score:** {row['Similarity Score']}")
-                st.write(f"**ML Prediction Probability:** {row['ML Prediction Probability']}")
+                st.write(f"**Similarity Score:** {row['Similarity Score']:.2f}") # Format for display
+                st.write(f"**ML Prediction Probability:** {row['ML Prediction Probability']:.2f}" if not np.isnan(row['ML Prediction Probability']) else "N/A") # Format for display
                 st.write(f"**Tag:** {row['Tag']}")
                 st.write(f"**AI Suggestion:** {row['AI Suggestion']}")
                 st.write(f"**Overall Assessment and Recommendation:** {row['Overall Assessment and Recommendation']}")
