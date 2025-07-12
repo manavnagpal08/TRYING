@@ -389,7 +389,7 @@ if job_description_file and resume_files:
                 "Resume Name", "Experience (Years)", "Similarity Score", "ML Prediction Probability", "Tag",
                 "AI Suggestion", "Overall Assessment and Recommendation", "Matched Keywords", "Missing Skills"
             ]],
-            hide_row_index=True,
+            hide_index=True, # Changed from hide_row_index to hide_index
             column_config={
                 "Resume Name": st.column_config.Column(
                     "Resume Name",
