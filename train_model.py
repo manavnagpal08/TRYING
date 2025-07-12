@@ -1,301 +1,141 @@
-import joblib
 import numpy as np
 import pandas as pd
-import re
-from datetime import datetime
-from sentence_transformers import SentenceTransformer
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import mean_squared_error, r2_score
-import nltk
-import collections
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.feature_extraction.text import TfidfVectorizer # For text data
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random # This is used for the *original* in-memory data generation, but will be removed if loading from file
+import joblib # For saving/loading the model and vectorizer
 
-# --- Configuration ---
-MODEL_SAVE_PATH = "ml_screening_model.pkl"
+# --- 1. Data Loading (for Resume Screening) ---
+# Replace this section with your actual resume screening data loading.
+# Your data will likely be in a CSV, JSON, or database format.
+# Assume your data has at least two columns: one for the resume text and one for the target label.
+print("1. Loading resume screening dataset...")
 
-# Ensure NLTK stopwords are downloaded
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+# --- LOAD DATA FROM GENERATED FILES ---
+# Choose one of the following lines to load from the CSV or JSON file you generated.
+# Uncomment the one you want to use and comment out the other.
 
-# --- Stop Words List (MUST MATCH screener.py) ---
-NLTK_STOP_WORDS = set(nltk.corpus.stopwords.words('english'))
-CUSTOM_STOP_WORDS = set([
-    "work", "experience", "years", "year", "months", "month", "day", "days", "project", "projects",
-    "team", "teams", "developed", "managed", "led", "created", "implemented", "designed",
-    "responsible", "proficient", "knowledge", "ability", "strong", "proven", "demonstrated",
-    "solution", "solutions", "system", "systems", "platform", "platforms", "framework", "frameworks",
-    "database", "databases", "server", "servers", "cloud", "computing", "machine", "learning",
-    "artificial", "intelligence", "api", "apis", "rest", "graphql", "agile", "scrum", "kanban",
-    "devops", "ci", "cd", "test", "testing", "qa", "quality", "assurance", "security", "data",
-    "analytics", "big", "etl", "pipeline", "warehousing", "visualization", "reporting", "dashboard",
-    "ui", "ux", "front-end", "backend", "full-stack", "mobile", "web", "desktop", "application",
-    "applications", "software", "hardware", "firmware", "embedded", "network", "networking",
-    "cybersecurity", "information", "systems", "it", "support", "consulting", "service", "services",
-    "client", "customer", "business", "analysis", "analyst", "manager", "management", "director",
-    "lead", "senior", "junior", "associate", "specialist", "engineer", "developer", "architect",
-    "scientist", "researcher", "intern", "contractor", "freelancer", "freelance", "consultant",
-    "professional", "expert", "specialist", "advisor", "adviser", "strategist", "strategical",
-    "operational", "operations", "strategy", "strategic", "tactical", "tactics", "initiative",
-    "initiatives", "program", "programs", "portfolio", "portfolios", "governance", "compliance",
-    "regulation", "regulations", "audit", "auditing", "risk", "risks", "fraud", "forensics",
-    "investigation", "investigations", "legal", "law", "attorney", "patent", "trademark", "copyright",
-    "intellectual", "property", "finance", "financial", "accounting", "accountant", "bookkeeping",
-    "audit", "tax", "taxation", "budget", "budgeting", "forecast", "forecasting", "treasury",
-    "investment", "investments", "equity", "debt", "capital", "markets", "trading", "trader",
-    "broker", "brokerage", "wealth", "management", "planner", "planning", "advisor", "adviser",
-    "insurance", "underwriting", "claims", "actuarial", "actuary", "marketing", "sales", "brand",
-    "branding", "product", "promotion", "advertising", "public", "relations", "pr", "communications",
-    "content", "copywriting", "seo", "sem", "social", "media", "digital", "e-commerce", "retail",
-    "wholesale", "distribution", "logistics", "supply", "chain", "procurement", "purchasing",
-    "inventory", "warehouse", "transportation", "shipping", "freight", "customs", "export", "import",
-    "international", "global", "local", "regional", "national", "country", "city", "state",
-    "province", "territory", "district", "area", "zone", "region", "territory", "community",
-    "communities", "public", "private", "government", "non-profit", "education", "healthcare",
-    "medical", "pharmaceutical", "biotechnology", "life", "sciences", "clinical", "research",
-    "development", "rd", "manufacturing", "production", "engineering", "quality", "control", "qc",
-    "assurance", "qa", "safety", "environmental", "health", "safety", "ehs", "hseq", "sustainability",
-    "sustainable", "green", "renewable", "energy", "oil", "gas", "mining", "metals", "minerals",
-    "agriculture", "farming", "food", "beverage", "hospitality", "travel", "tourism", "leisure",
-    "entertainment", "media", "publishing", "film", "television", "radio", "music", "art", "design",
-    "fashion", "apparel", "textile", "jewelry", "watch", "accessories", "luxury", "goods", "sports",
-    "fitness", "wellness", "personal", "care", "beauty", "cosmetics", "fragrances", "toiletries",
-    "household", "cleaning", "consumer", "packaged", "goods", "cpg", "telecommunications", "broadband",
-    "wireless", "wired", "fiber", "optic", "satellite", "broadcasting", "internet", "online",
-    "ecommerce", "marketplace", "platform", "solutions", "services", "system", "technology",
-    "innovation", "research", "development", "strategy", "strategic", "planning", "execution",
-    "implementation", "optimization", "efficiency", "productivity", "performance", "growth",
-    "expansion", "market", "share", "leadership", "competitive", "advantage", "differentiation",
-    "value", "proposition", "customer", "satisfaction", "engagement", "loyalty", "retention",
-    "acquisition", "sales", "revenue", "profit", "margin", "cost", "reduction", "efficiency",
-    "productivity", "return", "investment", "roi", "compliance", "regulatory", "audit", "governance",
-    "risk", "management", "security", "privacy", "ethics", "social", "responsibility", "sustainability"
-])
-ALL_STOP_WORDS = NLTK_STOP_WORDS.union(CUSTOM_STOP_WORDS)
+# For CSV:
+df = pd.read_csv('dummy_resume_data.csv')
+# For JSON:
+# df = pd.read_json('dummy_resume_data.json')
 
-# --- REQUIRED SECTIONS and PATTERN (MUST MATCH screener.py) ---
-REQUIRED_SECTIONS = [
-    "experience", "education", "skills", "projects", "certifications",
-    "awards", "publications", "extracurricular activities", "volunteer experience"
-]
 
-SECTION_HEADERS_PATTERN = re.compile(
-    r'(?:^|\n)(?P<header>education|experience|skills|projects|certifications|awards|publications|extracurricular activities|volunteer experience|summary|about|profile|contact|interests|languages|references)\b',
-    re.IGNORECASE
+# Separate features (X) and target variable (y)
+# 'resume_text' will be our feature (X) and 'job_category' will be our target (y)
+X_raw = df['resume_text']
+y = df['job_category']
+
+print(f"Dataset loaded. Number of resumes: {len(X_raw)}")
+print("First 5 resume texts:\n", X_raw[:5].tolist())
+print("First 5 job categories:\n", y[:5].tolist())
+print(f"\nValue counts for job categories:\n{y.value_counts()}")
+
+
+# --- 2. Text Preprocessing (Vectorization) ---
+# Machine learning models cannot directly process raw text.
+# We need to convert text into numerical features using a technique like TF-IDF.
+print("\n2. Performing text vectorization using TF-IDF...")
+vectorizer = TfidfVectorizer(
+    max_features=7000, # Increased max_features for a larger dataset and richer vocabulary
+    stop_words='english', # Remove common English stop words (e.g., 'the', 'is')
+    ngram_range=(1, 2) # Consider single words and two-word phrases
+)
+X = vectorizer.fit_transform(X_raw)
+print(f"Text data vectorized. New feature matrix shape: {X.shape}")
+
+# --- 3. Data Splitting ---
+# Split the data into training and testing sets.
+# The test set will be used for final evaluation and should not be touched during training/tuning.
+print("\n3. Splitting data into training and testing sets...")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+print(f"Training data shape: X_train={X_train.shape}, y_train={y_train.shape}")
+print(f"Testing data shape: X_test={X_test.shape}, y_test={y_test.shape}")
+
+# --- 4. Model Selection and Hyperparameter Tuning (GridSearchCV) ---
+# We'll use a RandomForestClassifier as an example.
+# GridSearchCV helps find the best hyperparameters by trying all combinations
+# within a defined grid and using cross-validation.
+print("\n4. Initializing RandomForestClassifier and defining hyperparameter grid...")
+model = RandomForestClassifier(random_state=42)
+
+# Define the grid of hyperparameters to search
+param_grid = {
+    'n_estimators': [100, 200, 300],  # Number of trees in the forest
+    'max_depth': [10, 20, None],      # Maximum depth of the tree (None means unlimited)
+    'min_samples_split': [2, 5],      # Minimum number of samples required to split an internal node
+    'min_samples_leaf': [1, 2]        # Minimum number of samples required to be at a leaf node
+}
+
+print("Starting GridSearchCV for hyperparameter tuning (this may take some time)...")
+grid_search = GridSearchCV(
+    estimator=model,
+    param_grid=param_grid,
+    cv=5,                  # Keeping CV at 5 for robustness
+    scoring='accuracy',    # Metric to optimize
+    n_jobs=-1,             # Use all available CPU cores
+    verbose=1              # Show progress
 )
 
-# --- Helper Functions (Copied from ScreenerPro for consistency) ---
-def clean_text(text):
-    text = text.lower()
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+grid_search.fit(X_train, y_train)
 
-def extract_years_of_experience(text):
-    total_months = 0
-    text = text.lower()
-    job_date_ranges = re.findall(
-        r'(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})\s*(?:to|–|-)\s*(present|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4})',
-        text
-    )
-    for start, end in job_date_ranges:
-        try:
-            start_date = datetime.strptime(start.strip(), '%b %Y')
-        except ValueError:
-            try:
-                start_date = datetime.strptime(start.strip(), '%B %Y')
-            except ValueError:
-                continue
-        if end.strip() == 'present':
-            end_date = datetime.now()
-        else:
-            try:
-                end_date = datetime.strptime(end.strip(), '%b %Y')
-            except ValueError:
-                try:
-                    end_date = datetime.strptime(end.strip(), '%B %Y')
-                except ValueError:
-                    continue
-        delta_months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
-        total_months += max(delta_months, 0)
+print("\nGridSearchCV completed.")
+print(f"Best hyperparameters found: {grid_search.best_params_}")
+print(f"Best cross-validation accuracy: {grid_search.best_score_:.4f}")
 
-    if total_months == 0:
-        match = re.search(r'(\d+(?:\.\d+)?)\s*(\+)?\s*(year|yrs|years)\b', text)
-        if not match:
-            match = re.search(r'experience[^\d]{0,10}(\d+(?:\.\d+)?)', text)
-        if match:
-            return float(match.group(1))
-    return round(total_months / 12, 1)
+# Get the best model
+best_model = grid_search.best_estimator_
 
-def get_top_keywords(text, top_n=50):
-    words = clean_text(text).split()
-    filtered_words = [word for word in words if word not in ALL_STOP_WORDS and len(word) > 2]
-    word_counts = collections.Counter(filtered_words)
+# --- 5. Cross-Validation (on the best model) ---
+# Evaluate the best model's performance using cross-validation on the training data.
+# This gives a more robust estimate of performance than a single train/validation split.
+print("\n5. Performing cross-validation on the best model...")
+cv_scores = cross_val_score(best_model, X_train, y_train, cv=10, scoring='accuracy', n_jobs=-1) # Keeping CV at 10
+print(f"Cross-validation accuracies: {cv_scores}")
+print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores):.4f})")
 
-    bigrams = []
-    for i in range(len(filtered_words) - 1):
-        bigram = f"{filtered_words[i]} {filtered_words[i+1]}"
-        bigrams.append(bigram)
-    bigram_counts = collections.Counter(bigrams)
+# --- 6. Final Model Evaluation on Test Set ---
+# Evaluate the best model on the unseen test set to get a final, unbiased performance estimate.
+print("\n6. Evaluating the best model on the unseen test set...")
+y_pred = best_model.predict(X_test)
 
-    all_counts = word_counts + bigram_counts
-    return [word for word, count in all_counts.most_common(top_n)]
+final_accuracy = accuracy_score(y_test, y_pred)
+print(f"Final Test Set Accuracy: {final_accuracy:.4f}")
 
-def extract_sections(text):
-    sections = {}
-    current_section = None
-    lines = text.split('\n')
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
 
-    for line in lines:
-        match = SECTION_HEADERS_PATTERN.match(line.strip())
-        if match:
-            header = match.group('header').lower()
-            if header in REQUIRED_SECTIONS or header in ["summary", "about", "profile", "contact", "interests", "languages", "references"]:
-                current_section = header
-                sections[current_section] = []
-            elif current_section:
-                sections[current_section].append(line.strip())
-        elif current_section is not None:
-            sections[current_section].append(line.strip())
+print("\nConfusion Matrix:")
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
 
-    for section, content_list in sections.items():
-        sections[section] = "\n".join(content_list).strip()
-    return sections
+# --- 7. Visualization of Confusion Matrix ---
+# Note: For multi-class classification, the confusion matrix will be larger.
+# The labels will correspond to the unique categories in your 'job_category' column.
+plt.figure(figsize=(16, 14)) # Adjusted figure size for more categories and better readability
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
+            xticklabels=np.unique(y), # Use actual class labels for x-axis
+            yticklabels=np.unique(y)) # Use actual class labels for y-axis
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.title('Confusion Matrix for Resume Screening')
+plt.show()
 
-def calculate_length_score(resume_text):
-    word_count = len(clean_text(resume_text).split())
-    if 300 <= word_count <= 800:
-        return 100
-    elif 150 <= word_count < 300 or 800 < word_count <= 1200:
-        return 70
-    else:
-        return 30
+# --- 8. Save the Trained Model and Vectorizer ---
+# It's crucial to save your trained model and the TF-IDF vectorizer
+# so you can use them later to make predictions on new, unseen resumes
+# without retraining the model or re-fitting the vectorizer.
+model_filename = 'resume_screening_model.pkl'
+vectorizer_filename = 'tfidf_vectorizer.pkl'
 
+joblib.dump(best_model, model_filename)
+joblib.dump(vectorizer, vectorizer_filename)
 
-# --- Main Training Script ---
-if __name__ == "__main__":
-    print("Loading SentenceTransformer model...")
-    try:
-        sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
-        print("SentenceTransformer model loaded successfully!")
-    except Exception as e:
-        print(f"Error loading SentenceTransformer model: {e}")
-        print("Please ensure you have an active internet connection and the model can be downloaded.")
-        exit()
+print(f"\nModel saved to {model_filename}")
+print(f"TF-IDF Vectorizer saved to {vectorizer_filename}")
 
-    print("Loading training data...")
-    # IMPORTANT: Ensure 'ai_resume_training_data_450_diverse.csv' is in the same directory
-    try:
-        df = pd.read_csv('ai_resume_training_data_450_final.csv')
-        print("Training data loaded successfully!")
-    except FileNotFoundError:
-        print("Error: 'ai_resume_training_data_450_diverse.csv' not found. Please ensure it's in the same directory.")
-        exit()
-    except Exception as e:
-        print(f"Error loading CSV: {e}")
-        exit()
-
-    # Extract target score from 'detailed_ai_suggestion' column
-    def extract_score_from_suggestion(suggestion_text):
-        match = re.search(r'Score:\s*(\d+)%', suggestion_text)
-        if match:
-            return int(match.group(1))
-        return np.nan
-
-    df['target_score'] = df['detailed_ai_suggestion'].apply(extract_score_from_suggestion)
-    df.dropna(subset=['target_score'], inplace=True)
-    
-    if df.empty:
-        print("No valid target scores found in the dataset after extraction. Exiting.")
-        exit()
-    print(f"Extracted {len(df)} valid target scores.")
-
-
-    # Pre-process and extract features
-    print("Extracting features from training data...")
-    X = [] # Features for the ML model
-    y = [] # Target variable (Score)
-
-    for index, row in df.iterrows():
-        jd_text = str(row['jd_text']) if not pd.isna(row['jd_text']) else ""
-        resume_text = str(row['resume_text']) if not pd.isna(row['resume_text']) else ""
-        score = float(row['target_score'])
-
-        if not jd_text.strip() or not resume_text.strip():
-            continue
-
-        cleaned_jd = clean_text(jd_text)
-        cleaned_resume = clean_text(resume_text)
-
-        jd_embedding = np.array(sentence_model.encode(cleaned_jd))
-        resume_embedding = np.array(sentence_model.encode(cleaned_resume))
-
-        experience = extract_years_of_experience(resume_text)
-
-        jd_keywords = set(get_top_keywords(cleaned_jd))
-        resume_keywords = set(get_top_keywords(cleaned_resume))
-        keyword_overlap_count = len(jd_keywords.intersection(resume_keywords))
-
-        # NEW: Calculate Section Completeness and Length Score for ML features
-        resume_sections = extract_sections(cleaned_resume)
-        section_completeness_score = (sum(1 for sec in REQUIRED_SECTIONS if sec in resume_sections and resume_sections[sec]) / len(REQUIRED_SECTIONS) if REQUIRED_SECTIONS else 0.0) * 100
-        length_score = calculate_length_score(cleaned_resume)
-
-        # Combine all features into a single array
-        # This will now result in 384 (JD embed) + 384 (Resume embed) + 1 (exp) + 1 (keyword overlap) + 1 (section completeness) + 1 (length) = 772 features
-        features = np.concatenate([
-            jd_embedding.astype(float),
-            resume_embedding.astype(float),
-            np.array([float(experience)]),
-            np.array([float(keyword_overlap_count)]),
-            np.array([float(section_completeness_score)]), # New feature
-            np.array([float(length_score)]) # New feature
-        ])
-        X.append(features)
-        y.append(score)
-
-    X = np.array(X)
-    y = np.array(y)
-
-    if X.shape[0] == 0:
-        print("No valid data points to train the model. Exiting.")
-        exit()
-
-    print(f"Shape of features (X): {X.shape}")
-    print(f"Shape of target (y): {y.shape}")
-    print(f"Number of features generated: {X.shape[1]}") # This should now print 772
-
-    # Split data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    print("Defining the parameter grid for GridSearchCV...")
-    param_grid = {
-        'n_estimators': [100, 200, 300],
-        'max_depth': [10, 20, None],
-        'min_samples_leaf': [1, 2, 4]
-    }
-
-    rf = RandomForestRegressor(random_state=42, n_jobs=-1)
-    grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, n_jobs=-1, verbose=2, scoring='r2')
-
-    print("Starting GridSearchCV for hyperparameter tuning...")
-    grid_search.fit(X_train, y_train)
-
-    model = grid_search.best_estimator_
-    print("RandomForestRegressor trained with best hyperparameters.")
-    print(f"Best parameters found: {grid_search.best_params_}")
-
-    # Evaluate the best model
-    y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-
-    print("Model Evaluation:")
-    print(f"Mean Squared Error (MSE): {mse:.2f}")
-    print(f"R-squared (R2) Score: {r2:.2f}")
-    print(f"Features the model was trained on: {model.n_features_in_}") # This will confirm 772
-
-    # Save the trained model
-    joblib.dump(model, MODEL_SAVE_PATH)
-    print(f"Trained ML model saved to {MODEL_SAVE_PATH}")
+print("\nModel training and evaluation complete!")
