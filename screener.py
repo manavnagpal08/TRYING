@@ -310,15 +310,28 @@ if job_description_file and resume_files:
             ml_tag = "N/A"
             if ml_model and model and jd_embedding is not None:
                 try:
-                    # Combine JD and resume embeddings for ML model input
-                    # This assumes ml_model expects a concatenated feature vector
-                    # You might need to adjust this based on how your ml_screening_model.pkl was trained
-                    combined_embedding = np.concatenate((jd_embedding[0], resume_embedding[0])).reshape(1, -1)
+                    # Original combined embedding from JD and resume text
+                    base_combined_embedding = np.concatenate((jd_embedding[0], resume_embedding[0]))
                     
+                    # Additional scalar features
+                    additional_features = np.array([
+                        experience,
+                        len(matched_skills),
+                        len(missing_skills),
+                        similarity_score
+                    ])
+                    
+                    # Concatenate all features
+                    # Ensure additional_features are reshaped to (1, N) if they are 1D
+                    # and base_combined_embedding is already (1, M) or can be flattened
+                    # Here, base_combined_embedding is (768,) and additional_features is (4,)
+                    # So, we concatenate them to get (772,) and then reshape to (1, 772)
+                    final_features_for_ml = np.concatenate((base_combined_embedding, additional_features)).reshape(1, -1)
+
                     # Get prediction probabilities for "suitable" class (assuming 1 is suitable)
                     if 1 in ml_model.classes_:
                         proba_index = list(ml_model.classes_).index(1)
-                        ml_prediction_proba = ml_model.predict_proba(combined_embedding)[0][proba_index]
+                        ml_prediction_proba = ml_model.predict_proba(final_features_for_ml)[0][proba_index]
                         
                         # Tagging logic based on ML prediction probability and experience
                         if ml_prediction_proba >= tag_threshold_highly_suitable and experience >= 3: # Example: 3+ years for highly suitable
