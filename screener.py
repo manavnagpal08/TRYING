@@ -249,30 +249,6 @@ ALL_SKILLS_MASTER = {
     "Esports Data Analytics Software", "Esports Performance Analysis Software",
     "Esports Coaching Software", "Esports Training Platforms", "Esports Scouting Tools",
     "Esports Player Databases", "Esports Team Databases", "Esports Organization Databases",
-    "Esports League Databases", "Esports Tournament Platforms", "Esports Venue Management Software",
-    "Esports Sponsorship Management Software", "Esports Marketing Automation Software",
-    "Esports Content Management Systems", "Esports Social Media Management Tools",
-    "Esports PR Tools", "Esports Brand Monitoring Tools", "Esports Community Management Software",
-    "Esports Fan Engagement Platforms", "Esports Merchandise Management Software",
-    "Esports Ticketing Platforms", "Esports Hospitality Management Software",
-    "Esports Logistics Management Software", "Esports Security Management Software",
-    "Esports Legal Management Software", "Esports Finance Management Software",
-    "Esports HR Management Software", "Esports Business Operations Software",
-    "Esports Data Analytics Software", "Esports Performance Analysis Software",
-    "Esports Coaching Software", "Esports Training Platforms", "Esports Scouting Tools",
-    "Esports Player Databases", "Esports Team Databases", "Esports Organization Databases",
-    "Esports League Databases", "Esports Tournament Platforms", "Esports Venue Management Software",
-    "Esports Sponsorship Management Software", "Esports Marketing Automation Software",
-    "Esports Content Management Systems", "Esports Social Media Management Tools",
-    "Esports PR Tools", "Esports Brand Monitoring Tools", "Esports Community Management Software",
-    "Esports Fan Engagement Platforms", "Esports Merchandise Management Software",
-    "Esports Ticketing Platforms", "Esports Hospitality Management Software",
-    "Esports Logistics Management Software", "Esports Security Management Software",
-    "Esports Legal Management Software", "Esports Finance Management Software",
-    "Esports HR Management Software", "Esports Business Operations Software",
-    "Esports Data Analytics Software", "Esports Performance Analysis Software",
-    "Esports Coaching Software", "Esports Training Platforms", "Esports Scouting Tools",
-    "Esports Player Databases", "Esports Team Databases", "Esports Organization Databases",
     "Esports League Datab"
 }
 
@@ -982,11 +958,6 @@ def create_bulk_mailto_link(candidate_emails, job_title="Job Opportunity", sende
 We hope this email finds you well.
 
 We are pleased to inform you that your application for the {job_title} position has been reviewed, and we are very impressed with your profile.
-
-We would like to invite you for an interview to discuss your experience and qualifications further. Please let us know your availability in the coming days.
-
-Best regards,
-
 The {sender_name}"""
 
     return f"mailto:{recipients}?subject={subject}&body={urllib.parse.quote(body)}"
@@ -1083,7 +1054,8 @@ if jd_text and resume_files:
     st.markdown("---")
     st.markdown("## ☁️ Job Description Keyword Cloud")
     st.caption("Visualizing the most frequent and important keywords from the Job Description (common words filtered out).")
-    jd_words_for_cloud = " ".join([word for word in re.findall(r'\b\w+\b', clean_text_for_parsing(jd_text)) if word not in CUSTOM_STOP_WORDS])
+    # MODIFIED: Use extract_skills_from_text to ensure only actual skills are in the word cloud
+    jd_words_for_cloud = " ".join([word for word in extract_skills_from_text(jd_text)])
     if jd_words_for_cloud:
         wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(jd_words_for_cloud)
         fig, ax = plt.subplots(figsize=(10, 5))
