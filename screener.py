@@ -476,15 +476,15 @@ if job_description_file and resume_files:
 else:
     st.info("Upload a Job Description and Resumes to begin screening.")
 
-# --- About Section (Still in sidebar as it's common practice for app info) ---
-st.sidebar.title("About ScreenerPro")
-st.sidebar.info(
+# --- About Section (Moved from sidebar to main content) ---
+st.header("About ScreenerPro")
+st.info(
     "ScreenerPro is an AI-powered application designed to streamline the resume screening "
     "process. It leverages a custom-trained Machine Learning model, a Sentence Transformer for "
     "semantic understanding, and a fine-tuned T5 model for insightful AI suggestions and summarization.\n\n"
     "Upload job descriptions and resumes, and let AI assist you in identifying the best-fit candidates!"
 )
-st.sidebar.markdown("---")
-st.sidebar.markdown(
+st.markdown("---")
+st.markdown(
     "Developed by [Manav Nagpal](https://www.linkedin.com/in/manav-nagpal-b03a743b/)"
 )
