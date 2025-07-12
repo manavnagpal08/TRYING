@@ -3,8 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
-from login import login_section
-from email_sender import send_email_to_candidate
+# Assuming login.py, email_sender.py, manage_jds.py, search.py, notes.py exist
+# and are correctly structured for exec() or runpy.run_path()
+from login import login_section # Assuming login.py contains this function
+from email_sender import send_email_to_candidate # Assuming email_sender.py contains this function
 import os
 import json
 import pdfplumber
@@ -56,7 +58,7 @@ html, body, [class*="css"] {
 }
 .dashboard-card:hover {
     transform: translateY(-6px);
-    box_shadow: 0 10px 24px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.1);
     background: linear-gradient(145deg, #e0f7fa, #f1f1f1);
 }
 .dashboard-header {
@@ -77,7 +79,8 @@ html, body, [class*="css"] {
 """, unsafe_allow_html=True)
 
 # --- Branding ---
-st.image("logo.png", width=300)
+# Placeholder for logo.png - ensure this file exists or replace with a URL
+# st.image("logo.png", width=300) 
 st.title("🧠 ScreenerPro – AI Hiring Assistant")
 
 
@@ -111,16 +114,15 @@ if tab == "🏠 Dashboard":
     avg_score = 0.0
     df_results = pd.DataFrame() # Initialize empty DataFrame
 
-    # Load results from session state instead of results.csv
-    if 'screening_results' in st.session_state and st.session_state['screening_results']:
+    # Load results from session state (using the correct key 'screening_results_df')
+    if 'screening_results_df' in st.session_state and not st.session_state['screening_results_df'].empty:
         try:
-            df_results = pd.DataFrame(st.session_state['screening_results'])
+            df_results = st.session_state['screening_results_df'] # Directly use the DataFrame
             resume_count = df_results["File Name"].nunique() # Count unique resumes screened
             
-            # Define cutoff for shortlisted candidates (consistent with streamlit_app.py)
-            # Make sure these values match the sliders in streamlit_app.py for consistency
-            cutoff_score = 80 
-            min_exp_required = 2
+            # Define cutoff for shortlisted candidates consistent with screener.py's default sliders
+            cutoff_score = 75  # Default from screener.py
+            min_exp_required = 2 # Default from screener.py
 
             shortlisted = df_results[(df_results["Score (%)"] >= cutoff_score) & 
                                      (df_results["Years Experience"] >= min_exp_required)].shape[0]
@@ -168,6 +170,7 @@ if tab == "🏠 Dashboard":
                 ax1.pie(pie_data['Count'], labels=pie_data['Tag'], autopct='%1.1f%%', startangle=90, textprops={'fontsize': 10})
                 ax1.axis('equal')
                 st.pyplot(fig_pie)
+                plt.close(fig_pie) # Close the figure to free memory
 
             with col_g2:
                 st.markdown("##### 📊 Experience Distribution")
@@ -181,6 +184,7 @@ if tab == "🏠 Dashboard":
                 ax2.set_xlabel("Experience Range")
                 ax2.tick_params(axis='x', labelrotation=0)
                 st.pyplot(fig_bar)
+                plt.close(fig_bar) # Close the figure to free memory
             
             # 📋 Top 5 Most Common Skills - Enhanced & Resized
             st.markdown("##### 🧠 Top 5 Most Common Skills")
@@ -208,6 +212,7 @@ if tab == "🏠 Dashboard":
 
                 fig_skills.tight_layout()
                 st.pyplot(fig_skills)
+                plt.close(fig_skills) # Close the figure to free memory
 
             else:
                 st.info("No skill data available in results.")
