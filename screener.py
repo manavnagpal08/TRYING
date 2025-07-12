@@ -237,18 +237,6 @@ ALL_SKILLS_MASTER = {
     "Esports Data Analytics Software", "Esports Performance Analysis Software",
     "Esports Coaching Software", "Esports Training Platforms", "Esports Scouting Tools",
     "Esports Player Databases", "Esports Team Databases", "Esports Organization Databases",
-    "Esports League Databases", "Esports Tournament Platforms", "Esports Venue Management Software",
-    "Esports Sponsorship Management Software", "Esports Marketing Automation Software",
-    "Esports Content Management Systems", "Esports Social Media Management Tools",
-    "Esports PR Tools", "Esports Brand Monitoring Tools", "Esports Community Management Software",
-    "Esports Fan Engagement Platforms", "Esports Merchandise Management Software",
-    "Esports Ticketing Platforms", "Esports Hospitality Management Software",
-    "Esports Logistics Management Software", "Esports Security Management Software",
-    "Esports Legal Management Software", "Esports Finance Management Software",
-    "Esports HR Management Software", "Esports Business Operations Software",
-    "Esports Data Analytics Software", "Esports Performance Analysis Software",
-    "Esports Coaching Software", "Esports Training Platforms", "Esports Scouting Tools",
-    "Esports Player Databases", "Esports Team Databases", "Esports Organization Databases",
     "Esports League Datab"
 }
 
@@ -734,10 +722,11 @@ def extract_name(text):
 
 # --- AI Suggestion Function (Now uses T5 for narrative, ML for score) ---
 @st.cache_data(show_spinner="Generating AI Suggestion...")
-def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text, matched_keywords, missing_skills):
+def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity, jd_text, resume_text, matched_keywords, missing_skills, concise_mode=False):
     """
     Generates a comprehensive AI suggestion combining T5 summary with rule-based assessment,
     including a section on why to hire and company growth.
+    If concise_mode is True, returns a shorter summary for table display.
     """
     overall_fit_phrase = ""
     recommendation_phrase = ""
@@ -759,7 +748,7 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
         recommendation_phrase = "Strongly Recommended for Interview"
         strengths.append("Their profile demonstrates an **outstanding conceptual and practical alignment** with the job description.")
         strengths.append(f"They possess **extensive relevant experience** ({years_exp:.1f} years), aligning perfectly with the role's demands.")
-        growth_potential.append(f"Hiring {candidate_name} would directly accelerate our team's objectives by leveraging their deep expertise in **{' and '.join(matched_keywords[:3]) if matched_keywords else 'key areas'}**.")
+        growth_potential.append(f"Hiring {candidate_name} would directly accelerate our team's objectives by leveraging their deep expertise in **{', '.join(matched_keywords[:3]) if matched_keywords else 'key areas'}**.")
         growth_potential.append("Their proven ability in highly relevant fields suggests they can quickly contribute to strategic initiatives and mentor junior staff, fostering internal growth.")
 
     elif score >= MODERATE_FIT_SCORE and years_exp >= MODERATE_EXP and semantic_similarity >= MODERATE_SEMANTIC:
@@ -770,37 +759,42 @@ def generate_ai_suggestion(candidate_name, score, years_exp, semantic_similarity
             gaps.append(f"Experience ({years_exp:.1f} years) is slightly below the ideal, suggesting a need to probe depth in specific areas.")
         if semantic_similarity < HIGH_SEMANTIC:
             gaps.append("Their conceptual alignment with the role is fair; consider probing their approach to complex scenarios outlined in the JD.")
-        growth_potential.append(f"{candidate_name}'s solid foundation in **{' and '.join(matched_keywords[:2]) if matched_keywords else 'relevant skills'}** indicates they can be a reliable contributor, adding capacity and driving project completion.")
+        growth_potential.append(f"{candidate_name}'s solid foundation in **{', '.join(matched_keywords[:2]) if matched_keywords else 'relevant skills'}** indicates they can be a reliable contributor, adding capacity and driving project completion.")
         growth_potential.append("With targeted development, they have the potential to grow into more senior responsibilities, strengthening our long-term team capabilities.")
     else:
         overall_fit_phrase = "Lower Fit"
         recommendation_phrase = "Consider for Further Review / Likely Decline"
         gaps.append("Their overall profile indicates **significant discrepancies** with the job requirements, suggesting a lower overall fit.")
-        growth_potential.append(f"{candidate_name}'s current profile may require significant onboarding or skill development in **{' and '.join(missing_skills[:3]) if missing_skills else 'critical areas'}**, which might limit immediate impact on company growth.")
+        growth_potential.append(f"{candidate_name}'s current profile may require significant onboarding or skill development in **{', '.join(missing_skills[:3]) if missing_skills else 'critical areas'}**, which might limit immediate impact on company growth.")
 
     if years_exp < MODERATE_EXP:
         gaps.append(f"Experience ({years_exp:.1f} years) is notably limited for this role.")
     if semantic_similarity < MODERATE_SEMANTIC:
         gaps.append("A **conceptual gap** exists between their profile and the job description, implying a potential mismatch in understanding or approach.")
     if missing_skills:
-        gaps.append(f"Key skills explicitly mentioned in the JD such as **{' and '.join(missing_skills[:3])}** appear to be less prominent in their resume.")
+        gaps.append(f"Key skills explicitly mentioned in the JD such as **{', '.join(missing_skills[:3])}** appear to be less prominent in their resume.")
     if matched_keywords:
-        strengths.append(f"Strong alignment with keywords including **{' and '.join(matched_keywords[:3])}**.")
+        strengths.append(f"Strong alignment with keywords including **{', '.join(matched_keywords[:3])}**.")
 
     # Generate T5 summary for the resume
-    t5_resume_summary = generate_summary_with_t5(resume_text)
+    t5_resume_summary = generate_summary_with_t5(resume_text, max_length=50 if concise_mode else 150) # Shorter for concise mode
 
     # Combine all parts into the final suggestion
-    summary_parts = [f"**Overall Fit:** {overall_fit_phrase}.",]
-    if strengths:
-        summary_parts.append(f"**Strengths:** {' '.join(strengths)}")
-    if gaps:
-        summary_parts.append(f"**Areas for Development:** {' '.join(gaps)}")
-    summary_parts.append(f"**Resume Summary (T5):** {t5_resume_summary}")
-    summary_parts.append(f"**Why Hire & Company Growth:** {' '.join(growth_potential)}")
-    summary_parts.append(f"**Recommendation:** {recommendation_phrase}.")
-
-    return " ".join(summary_parts)
+    if concise_mode:
+        # For concise mode, focus on overall fit and a brief summary
+        summary_parts = [f"Fit: {overall_fit_phrase}.", f"Summary: {t5_resume_summary}"]
+        return " ".join(summary_parts)
+    else:
+        # Full detailed suggestion
+        summary_parts = [f"**Overall Fit:** {overall_fit_phrase}.",]
+        if strengths:
+            summary_parts.append(f"**Strengths:** {' '.join(strengths)}")
+        if gaps:
+            summary_parts.append(f"**Areas for Development:** {' '.join(gaps)}")
+        summary_parts.append(f"**Resume Summary (T5):** {t5_resume_summary}")
+        summary_parts.append(f"**Why Hire & Company Growth:** {' '.join(growth_potential)}")
+        summary_parts.append(f"**Recommendation:** {recommendation_phrase}.")
+        return " ".join(summary_parts)
 
 
 def semantic_score(resume_text, jd_text, years_exp, candidate_name="Unknown Candidate"):
@@ -958,6 +952,11 @@ def create_bulk_mailto_link(candidate_emails, job_title="Job Opportunity", sende
 We hope this email finds you well.
 
 We are pleased to inform you that your application for the {job_title} position has been reviewed, and we are very impressed with your profile.
+
+We would like to invite you for an interview to discuss your experience and qualifications further. Please let us know your availability in the coming days.
+
+Best regards,
+
 The {sender_name}"""
 
     return f"mailto:{recipients}?subject={subject}&body={urllib.parse.quote(body)}"
@@ -1028,15 +1027,30 @@ with col1:
         else:
             st.warning("T5 model not loaded, JD summarization unavailable.")
 
-    # Extract JD skills and embedding here, after jd_text is available
+    # Input for explicit JD skills for word cloud
+    explicit_jd_skills_input = st.text_input(
+        "Enter Key Skills for Job Description (comma-separated, optional)",
+        help="Provide specific skills to highlight in the Job Description Keyword Cloud. If left empty, skills will be extracted automatically."
+    )
+
     jd_embedding = None
     jd_skills = []
     if jd_text and model:
-        jd_skills = extract_skills_from_text(jd_text)
+        # If explicit skills are provided, use them for JD skills, otherwise extract from text
+        if explicit_jd_skills_input:
+            jd_skills = [s.strip() for s in explicit_jd_skills_input.split(',') if s.strip()]
+            # Filter these explicit skills against ALL_SKILLS_MASTER_SET to ensure validity
+            jd_skills = [s for s in jd_skills if s.lower() in ALL_SKILLS_MASTER_SET]
+            if not jd_skills:
+                st.warning("No valid skills found from your explicit input. Falling back to automatic extraction.")
+                jd_skills = extract_skills_from_text(jd_text)
+        else:
+            jd_skills = extract_skills_from_text(jd_text)
+        
         jd_embedding = get_job_description_embedding(jd_text, model)
     
     if jd_text and not jd_skills:
-        st.warning("No specific skills found in the uploaded Job Description. Skill matching might be less effective.")
+        st.warning("No specific skills found in the uploaded Job Description (or explicit input). Skill matching might be less effective.")
 
 
 with col2:
@@ -1053,9 +1067,11 @@ if jd_text and resume_files:
     # --- Job Description Keyword Cloud ---
     st.markdown("---")
     st.markdown("## ☁️ Job Description Keyword Cloud")
-    st.caption("Visualizing the most frequent and important keywords from the Job Description (common words filtered out).")
-    # MODIFIED: Use extract_skills_from_text to ensure only actual skills are in the word cloud
-    jd_words_for_cloud = " ".join([word for word in extract_skills_from_text(jd_text)])
+    st.caption("Visualizing the most frequent and important skills from the Job Description.")
+    
+    # Use the jd_skills (which now accounts for explicit input or automatic extraction)
+    jd_words_for_cloud = " ".join(jd_skills)
+    
     if jd_words_for_cloud:
         wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(jd_words_for_cloud)
         fig, ax = plt.subplots(figsize=(10, 5))
@@ -1064,7 +1080,7 @@ if jd_text and resume_files:
         st.pyplot(fig)
         plt.close(fig) # Close the figure to free up memory
     else:
-        st.info("No significant keywords to display for the Job Description. Please ensure your JD has sufficient content.")
+        st.info("No significant skills to display for the Job Description. Please ensure your JD has sufficient content or provide explicit skills.")
     st.markdown("---")
 
     results = []
@@ -1087,14 +1103,13 @@ if jd_text and resume_files:
 
         # --- Skill Extraction from Resume ---
         resume_skills = extract_skills_from_text(text)
-        # st.write(f"**Extracted Skills:** {', '.join(resume_skills) if resume_skills else 'No specific skills found.'}") # Moved to detailed view
 
         # --- Calculate Skill Match based on Extracted JD Skills ---
         skill_match_percentage = 0
         matched_skills = set()
         missing_skills = set()
 
-        # The target skills are now directly from the JD (extracted earlier)
+        # The target skills are now directly from the JD (extracted earlier, considering explicit input)
         target_skills_from_jd = {skill.lower() for skill in jd_skills} # Ensure JD skills are lowercase for comparison
         
         if target_skills_from_jd: # Only calculate if JD skills were found
@@ -1106,12 +1121,6 @@ if jd_text and resume_files:
             if len(target_skills_from_jd) > 0: # Avoid division by zero
                 skill_match_percentage = (len(matched_skills) / len(target_skills_from_jd)) * 100
             
-            # st.write(f"**Skill Match to Job Description:** {skill_match_percentage:.2f}%") # Moved to detailed view
-            # if matched_skills: st.write(f"**Matched Skills:** {', '.join(sorted(list(matched_skills)))}")
-            # if missing_skills: st.write(f"**Missing Skills from Job Description:** {', '.join(sorted(list(missing_skills)))}")
-        # else:
-            # st.info("No target skills extracted from the Job Description for matching.") # Moved to overall JD warning
-
         # --- Generate Embedding for Resume and Predict ML Match ---
         match_proba = 0.0
         semantic_sim_score = 0.0
@@ -1122,16 +1131,30 @@ if jd_text and resume_files:
         else:
             st.info(f"AI Similarity Score not available for {candidate_name} without Job Description embedding.")
 
-        # --- Generate AI Suggestion ---
+        # --- Generate Detailed AI Suggestion for Top Candidate logic ---
         detailed_ai_suggestion = generate_ai_suggestion(
             candidate_name=candidate_name,
-            score=match_proba, # Pass the final blended score
+            score=match_proba,
             years_exp=exp,
             semantic_similarity=semantic_sim_score,
             jd_text=jd_text,
             resume_text=text,
-            matched_keywords=sorted(list(matched_skills)), # Pass sorted lists
-            missing_skills=sorted(list(missing_skills))
+            matched_keywords=sorted(list(matched_skills)),
+            missing_skills=sorted(list(missing_skills)),
+            concise_mode=False # Always generate detailed for storage
+        )
+
+        # --- Generate Concise AI Suggestion for Table Display ---
+        concise_ai_suggestion = generate_ai_suggestion(
+            candidate_name=candidate_name,
+            score=match_proba,
+            years_exp=exp,
+            semantic_similarity=semantic_sim_score,
+            jd_text=jd_text,
+            resume_text=text,
+            matched_keywords=sorted(list(matched_skills)),
+            missing_skills=sorted(list(missing_skills)),
+            concise_mode=True # Generate concise for table
         )
 
         results.append({
@@ -1140,7 +1163,8 @@ if jd_text and resume_files:
             "Score (%)": match_proba, # Use the blended score
             "Years Experience": exp,
             "Email": email or "Not Found",
-            "AI Suggestion": detailed_ai_suggestion,
+            "Detailed AI Suggestion": detailed_ai_suggestion, # Store detailed
+            "Concise AI Suggestion": concise_ai_suggestion, # Store concise for table
             "Matched Keywords": ", ".join(sorted(list(matched_skills))),
             "Missing Skills": ", ".join(sorted(list(missing_skills))),
             "Semantic Similarity": semantic_sim_score,
@@ -1154,9 +1178,10 @@ if jd_text and resume_files:
 
     df = pd.DataFrame(results).sort_values(by="Score (%)", ascending=False).reset_index(drop=True)
 
-    st.session_state['screening_results'] = results
+    # Store the full DataFrame in session state for persistence within the session
+    st.session_state['screening_results_df'] = df
     
-    # Save results to CSV for analytics.py to use
+    # Save results to CSV for analytics.py to use (for external persistence)
     df.to_csv("results.csv", index=False)
 
 
@@ -1193,8 +1218,8 @@ if jd_text and resume_files:
         st.markdown(f"### **{top_candidate['Candidate Name']}**")
         st.markdown(f"**Score:** {top_candidate['Score (%)']:.2f}% | **Experience:** {top_candidate['Years Experience']:.1f} years | **Semantic Similarity:** {top_candidate['Semantic Similarity']:.2f}")
         
-        # Use the full AI Suggestion here
-        st.markdown(f"**AI Assessment:** {top_candidate['AI Suggestion']}") 
+        # Use the full Detailed AI Suggestion here
+        st.markdown(f"**AI Assessment:** {top_candidate['Detailed AI Suggestion']}") 
         
         # Determine job title for email
         job_title_for_email = "Job Opportunity" 
@@ -1240,7 +1265,7 @@ if jd_text and resume_files:
             'Years Experience',
             'Semantic Similarity',
             'Email',
-            'AI Suggestion' # Individual AI suggestion for each
+            'Concise AI Suggestion' # Use concise version for table
         ]
         
         st.dataframe(
@@ -1267,8 +1292,8 @@ if jd_text and resume_files:
                     min_value=0,
                     max_value=1
                 ),
-                "AI Suggestion": st.column_config.Column(
-                    "AI Suggestion",
+                "Concise AI Suggestion": st.column_config.Column( # Updated column name
+                    "AI Suggestion", # Display name in UI
                     help="AI's concise overall assessment and recommendation",
                     width="large" # Make it wider to show more text
                 )
@@ -1307,7 +1332,7 @@ if jd_text and resume_files:
         'Semantic Similarity',
         'Tag',
         'Email',
-        'AI Suggestion', # Ensure this is included
+        'Concise AI Suggestion', # Use concise version for table
         'Matched Keywords',
         'Missing Skills',
     ]
@@ -1338,8 +1363,8 @@ if jd_text and resume_files:
                 min_value=0,
                 max_value=1
             ),
-            "AI Suggestion": st.column_config.Column(
-                "AI Suggestion",
+            "Concise AI Suggestion": st.column_config.Column( # Updated column name
+                "AI Suggestion", # Display name in UI
                 help="AI's concise overall assessment and recommendation",
                 width="large" # Make it wider to show more text
             ),
@@ -1363,15 +1388,15 @@ if jd_text and resume_files:
 else:
     st.info("Upload a Job Description and Resumes to begin screening.")
 
-# --- About Section (Still in sidebar as it's common practice for app info) ---
-st.sidebar.title("About ScreenerPro")
-st.sidebar.info(
-    "ScreenerPro is an AI-powered application designed to streamline the resume screening "
-    "process. It leverages a custom-trained Machine Learning model, a Sentence Transformer for "
-    "semantic understanding, and a fine-tuned T5 model for insightful AI suggestions and summarization.\n\n"
-    "Upload job descriptions and resumes, and let AI assist you in identifying the best-fit candidates!"
-)
-st.sidebar.markdown("---")
-st.sidebar.markdown(
-    "Developed by [Manav Nagpal](https://www.linkedin.com/in/manav-nagpal-b03a74211/)"
-)
+# --- About Section (Removed from sidebar as per request) ---
+# st.sidebar.title("About ScreenerPro")
+# st.sidebar.info(
+#     "ScreenerPro is an AI-powered application designed to streamline the resume screening "
+#     "process. It leverages a custom-trained Machine Learning model, a Sentence Transformer for "
+#     "semantic understanding, and a fine-tuned T5 model for insightful AI suggestions and summarization.\n\n"
+#     "Upload job descriptions and resumes, and let AI assist you in identifying the best-fit candidates!"
+# )
+# st.sidebar.markdown("---")
+# st.sidebar.markdown(
+#     "Developed by [Manav Nagpal](https://www.linkedin.com/in/manav-nagpal-b03a74211/)"
+# )
