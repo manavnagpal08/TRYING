@@ -43,14 +43,12 @@ st.markdown("## 📊 Screening Analytics Dashboard")
 @st.cache_data(show_spinner=False)
 def load_screening_data():
     """Loads screening results, prioritizing session state, then results.csv."""
-    if 'screening_results' in st.session_state and st.session_state['screening_results']:
-        try:
-            st.info("✅ Loaded screening results from current session.")
-            return pd.DataFrame(st.session_state['screening_results'])
-        except Exception as e:
-            st.error(f"Error loading results from session state: {e}")
-            return pd.DataFrame() # Return empty DataFrame on error
+    # Check for DataFrame in session state first
+    if 'screening_results_df' in st.session_state and not st.session_state['screening_results_df'].empty:
+        st.info("✅ Loaded screening results from current session.")
+        return st.session_state['screening_results_df']
     else:
+        # Fallback to results.csv if not in session state or session state is empty
         data_source = "results.csv"
         if os.path.exists(data_source):
             try:
@@ -58,7 +56,7 @@ def load_screening_data():
                 if df_from_csv.empty:
                     st.warning("`results.csv` is empty. No screening data to display yet.")
                 else:
-                    st.info("📁 Loaded existing results from `results.csv` (No session data found).")
+                    st.info("📁 Loaded existing results from `results.csv` (No session data found or session data was empty).")
                 return df_from_csv
             except pd.errors.EmptyDataError:
                 st.warning("`results.csv` is empty. No screening data to display yet.")
@@ -151,12 +149,14 @@ st.divider()
 st.markdown("### 📋 Filtered Candidates List")
 display_cols_for_table = ['File Name', 'Candidate Name', 'Score (%)', 'Years Experience', 'Shortlisted']
 
+# Adjusted to use 'Concise AI Suggestion' as the column name for display
+if 'Concise AI Suggestion' in filtered_df.columns:
+    display_cols_for_table.append('Concise AI Suggestion')
 if 'Matched Keywords' in filtered_df.columns:
     display_cols_for_table.append('Matched Keywords')
 if 'Missing Skills' in filtered_df.columns:
     display_cols_for_table.append('Missing Skills')
-if 'AI Suggestion' in filtered_df.columns:
-    display_cols_for_table.append('AI Suggestion')
+
 
 st.dataframe(
     filtered_df[display_cols_for_table].sort_values(by="Score (%)", ascending=False),
