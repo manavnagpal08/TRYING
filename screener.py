@@ -27,6 +27,8 @@ def load_ml_model():
     try:
         model = SentenceTransformer("all-MiniLM-L6-v2")
         # Ensure ml_screening_model.pkl is trained with predict_proba capability (e.g., RandomForestClassifier, XGBClassifier)
+        # NOTE: The training script saves as 'resume_screening_model.pkl'.
+        # You must rename 'resume_screening_model.pkl' to 'ml_screening_model.pkl' in your directory.
         ml_model = joblib.load("ml_screening_model.pkl")
         
         # --- IMPORTANT CHECK FOR predict_proba ---
@@ -329,22 +331,23 @@ if job_description_file and resume_files:
                     final_features_for_ml = np.concatenate((base_combined_embedding, additional_features)).reshape(1, -1)
 
                     # Get prediction probabilities for "suitable" class (assuming 1 is suitable)
-                    if 1 in ml_model.classes_:
-                        proba_index = list(ml_model.classes_).index(1)
-                        ml_prediction_proba = ml_model.predict_proba(final_features_for_ml)[0][proba_index]
+                    # The ML model was trained on job categories, not a binary "suitable" class.
+                    # We need to predict the job category first, then tag based on probability of that category.
+                    predicted_category_ml = ml_model.predict(final_features_for_ml)[0]
+                    
+                    # Get the probability of the predicted category
+                    proba_index = list(ml_model.classes_).index(predicted_category_ml)
+                    ml_prediction_proba = ml_model.predict_proba(final_features_for_ml)[0][proba_index]
                         
-                        # Tagging logic based on ML prediction probability and experience
-                        if ml_prediction_proba >= tag_threshold_highly_suitable and experience >= 3: # Example: 3+ years for highly suitable
-                            ml_tag = "Highly Suitable"
-                        elif ml_prediction_proba >= tag_threshold_suitable and experience >= 1: # Example: 1+ year for suitable
-                            ml_tag = "Suitable"
-                        elif ml_prediction_proba >= tag_threshold_needs_review:
-                            ml_tag = "Needs Review"
-                        else:
-                            ml_tag = "Not Suitable"
+                    # Tagging logic based on ML prediction probability and experience
+                    if ml_prediction_proba >= tag_threshold_highly_suitable and experience >= 3: # Example: 3+ years for highly suitable
+                        ml_tag = "Highly Suitable"
+                    elif ml_prediction_proba >= tag_threshold_suitable and experience >= 1: # Example: 1+ year for suitable
+                        ml_tag = "Suitable"
+                    elif ml_prediction_proba >= tag_threshold_needs_review:
+                        ml_tag = "Needs Review"
                     else:
-                        st.warning("ML model does not have a '1' class for suitability prediction. Tagging will be limited.")
-                        ml_tag = "Cannot Tag (Model Class Missing)"
+                        ml_tag = "Not Suitable"
                 except Exception as e:
                     st.error(f"Error during ML prediction for {resume_file.name}: {e}")
                     ml_tag = "Error in ML Prediction"
