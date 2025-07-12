@@ -120,12 +120,10 @@ if tab == "🏠 Dashboard":
             df_results = st.session_state['screening_results_df'] # Directly use the DataFrame
             resume_count = df_results["File Name"].nunique() # Count unique resumes screened
             
-            # Define cutoff for shortlisted candidates consistent with screener.py's default sliders
-            cutoff_score = 75  # Default from screener.py
-            min_exp_required = 2 # Default from screener.py
-
-            shortlisted = df_results[(df_results["Score (%)"] >= cutoff_score) & 
-                                     (df_results["Years Experience"] >= min_exp_required)].shape[0]
+            # Calculate shortlisted based on the 'Tag' column from screener.py
+            # This ensures consistency with how candidates are categorized in the screener.
+            shortlisted = df_results[df_results['Tag'].isin(["🔥 Top Talent", "✅ Good Fit"])].shape[0]
+            
             avg_score = df_results["Score (%)"].mean()
         except Exception as e:
             st.error(f"Error processing screening results from session state: {e}")
@@ -153,10 +151,12 @@ if tab == "🏠 Dashboard":
     # Optional: Dashboard Insights
     if not df_results.empty: # Use df_results loaded from session state
         try:
-            df_results['Tag'] = df_results.apply(lambda row:
-                "🔥 Top Talent" if row['Score (%)'] > 90 and row['Years Experience'] >= 3
-                else "✅ Good Fit" if row['Score (%)'] >= 75
-                else "⚠️ Needs Review", axis=1)
+            # Ensure 'Tag' column exists before using it for insights
+            if 'Tag' not in df_results.columns:
+                 df_results['Tag'] = df_results.apply(lambda row:
+                    "🔥 Top Talent" if row['Score (%)'] > 90 and row['Years Experience'] >= 3
+                    else "✅ Good Fit" if row['Score (%)'] >= 75
+                    else "⚠️ Needs Review", axis=1)
 
             st.markdown("### 📊 Dashboard Insights")
 
